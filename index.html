@@ -1,0 +1,1115 @@
+<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Music Triad</title><style>
+:root{--ink:#111;--paper:#fff;--soft:#f3f3f3;--p:#dbeafe;--c:#fee2e2}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eee;color:#111}.app{max-width:980px;margin:auto;min-height:100vh;background:#fff;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.title{font-family:Georgia,serif;font-size:34px;font-weight:700}.controls{display:flex;gap:8px;flex-wrap:wrap}button,select{font:inherit;padding:9px 12px;border:1px solid #222;border-radius:8px;background:#fff;cursor:pointer}button:disabled{opacity:.55;cursor:default}.status{text-align:center;font-weight:700;margin:10px}.score{text-align:center;margin:6px}.board{width:min(72vw,500px);margin:10px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;background:#111;padding:7px;border-radius:10px}.slot{aspect-ratio:.70;border:0;border-radius:5px;background:#fafafa;padding:4px}.slot.empty:hover{background:#eee}.card{position:relative;width:100%;height:100%;min-height:110px;background:#fff;border:3px solid #111;border-radius:6px}.card.you{box-shadow:inset 0 0 0 5px #93c5fd}.card.cpu{box-shadow:inset 0 0 0 5px #fca5a5}.edge{position:absolute;display:flex;align-items:center;justify-content:center;width:42px;height:42px;font-size:27px}.t{top:4px;left:50%;transform:translateX(-50%)}.r{right:12px;top:50%;transform:translateY(-50%)}.b{bottom:4px;left:50%;transform:translateX(-50%)}.l{left:12px;top:50%;transform:translateY(-50%)}.handtitle{text-align:center;font-weight:700;margin:14px 0 7px}.hand{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.hand .pick{width:140px;aspect-ratio:.70;padding:3px;border:2px solid transparent;background:transparent}
+.tourney-panel{margin:14px auto 0;max-width:620px;padding:14px;border:2px solid #7b5c27;border-radius:12px;background:#fffaf0;text-align:center}
+.tourney-roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin:12px 0}
+.tourney-chip{border:2px solid #333;border-radius:999px;padding:8px 10px;background:#fff;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.tourney-color-name{font-family:Georgia,serif;font-size:32px;font-weight:800;margin:5px 0 12px;text-transform:uppercase}
+#startTournament:disabled{opacity:.55}
+
+.tourney-bracket-wrap{margin-top:16px;padding-top:14px;border-top:2px dashed #9b7a3d}
+.tourney-bracket-wrap h3{margin:0 0 12px}
+.tourney-bracket{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;text-align:left}
+.tourney-match{background:#fff;border:2px solid #333;border-radius:10px;padding:9px;box-shadow:2px 2px 0 #c9b37d}
+.tourney-match-title{text-align:center;font-size:.78rem;font-weight:900;letter-spacing:.08em;margin-bottom:6px}
+.tourney-player{font-weight:900;padding:6px 8px;border-radius:7px;background:#f7f2e7;margin:4px 0;text-transform:uppercase}
+.tourney-vs{text-align:center;font-size:.72rem;font-weight:900;opacity:.65}
+.tourney-bye{font-size:.78rem;text-align:center;font-style:italic;margin-top:5px}
+
+.tourney-match-ready{margin:16px auto 4px;max-width:440px;padding:14px;border:3px solid #333;border-radius:12px;background:#fff}
+.tourney-match-ready-label{text-align:center;font-weight:900;letter-spacing:.08em;font-size:.82rem}
+.tourney-match-ready-pair{text-align:center;font-family:Georgia,serif;font-size:25px;font-weight:900;margin:8px 0 12px;text-transform:uppercase}
+#playTournamentMatch{width:100%;min-height:46px;font-weight:900}
+.hand .pick.sel{border-color:#111;background:#eee}.hand .card{min-height:190px}.centerstar{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px}.fermata{width:36px;height:25px}.eighthrest{width:26px;height:38px}.restblock{width:35px;height:22px}.conductor{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}.rules{margin:18px auto 0;max-width:760px;background:#f7f7f7;border:1px solid #bbb;border-radius:10px;padding:12px;font-size:14px;line-height:1.45}.legend{display:flex;justify-content:center;gap:18px;font-size:13px}.sw{display:inline-block;width:14px;height:14px;border:1px solid #111;vertical-align:-2px}.sw.you{background:#dbeafe}.sw.cpu{background:#fee2e2}
+.helpbar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:14px 0 4px}.helpbtn{font-weight:700;background:#f7f7f7}
+.modal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.58);padding:18px;overflow:auto}.modal.open{display:flex;align-items:flex-start;justify-content:center}.modalbox{position:relative;width:min(760px,96vw);max-height:92vh;overflow:auto;margin:auto;background:#fff;border:3px solid #111;border-radius:14px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35)}.closemodal{position:absolute;right:12px;top:10px;width:42px;height:42px;padding:0;font-size:26px;font-weight:700;border-radius:50%}.modal h2{text-align:center;font-family:Georgia,serif;font-size:28px;margin:0 48px 16px}.modal h3{margin:18px 0 7px}.rulecallout{text-align:center;border:2px solid #111;border-radius:10px;padding:10px;font-size:19px;font-weight:700;background:#f7f7f7}.ruleslist{line-height:1.55;padding-left:22px}.cheatsection{border-top:2px solid #111;padding-top:12px;margin-top:12px}.cheatrow{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid #ddd}.cheatsymbol{display:flex;justify-content:center;align-items:center;min-height:44px;font-size:34px}.cheatsymbol svg{max-width:70px}.cheatname{font-weight:700}.cheatnote{font-size:13px;color:#444}.specialbox{border:1px solid #999;border-radius:10px;padding:10px;margin-top:10px;background:#fafafa}
+
+.startoverlay{position:fixed;inset:0;z-index:1200;background:#fff;display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* Tournament lobby can grow taller than the viewport; keep it scrollable on phones/tablets. */
+.startoverlay:has(#tourneyPanel:not([hidden])){align-items:flex-start}
+
+.startoverlay.hidden{display:none}
+.startbox{text-align:center;width:min(560px,94vw);border:3px solid #111;border-radius:18px;padding:34px 24px;background:#fff}
+.starttitle{font-family:Georgia,serif;font-size:42px;font-weight:800;letter-spacing:2px;margin:0}
+.startmusic{font-size:30px;letter-spacing:10px;margin:12px 0}
+.starttag{font-size:18px;margin:0 auto 24px;max-width:430px;color:#444}
+.startbtn{font-size:24px;font-weight:800;padding:14px 32px;border:3px solid #111;border-radius:12px;background:#fff;cursor:pointer}
+.startbtn:hover{background:#f3f3f3}
+.startlinks{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+
+/* Refined Music Triad masthead */
+.top h1{
+  width:100%;
+  text-align:center;
+  margin-left:auto;
+  margin-right:auto;
+  font-family:"Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",Georgia,serif;
+  font-weight:900;
+  font-variant:small-caps;
+  letter-spacing:.16em;
+  line-height:1;
+  text-shadow:0 1px 0 #fff8e7, 0 2px 0 rgba(70,48,25,.22);
+}
+
+
+.logo{
+  text-align:center;
+  font-family:"Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",Georgia,serif !important;
+  font-weight:900;
+  font-variant:small-caps;
+  letter-spacing:.14em;
+  text-shadow:0 1px 0 #fff8e7, 0 3px 0 rgba(70,48,25,.20);
+}
+
+
+/* Tournament champion celebration */
+.champion-splash{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(8,12,28,.94);overflow:hidden;text-align:center}
+.champion-splash[hidden]{display:none}
+.champion-card{position:relative;z-index:2;width:min(92vw,620px);padding:30px 22px;border:4px solid #f7d35c;border-radius:24px;background:linear-gradient(180deg,#172348,#0c1430);box-shadow:0 0 0 5px rgba(255,255,255,.08),0 18px 60px rgba(0,0,0,.5)}
+.champion-trophy{font-size:clamp(64px,16vw,110px);line-height:1;animation:champBounce .8s ease-in-out infinite alternate}
+.champion-title{margin:12px 0 6px;font-weight:1000;letter-spacing:.08em;font-size:clamp(24px,6vw,42px);color:#ffe47d;text-shadow:0 3px 0 #6f4d00}
+.champion-name{margin:8px 0 22px;font-weight:1000;text-transform:uppercase;font-size:clamp(46px,13vw,86px);line-height:1;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.55),0 0 18px rgba(255,255,255,.28)}
+.champion-view{font-size:18px;padding:13px 22px}
+.champion-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti-piece{position:absolute;top:-12vh;width:10px;height:18px;border-radius:2px;background:var(--c);left:var(--x);animation:confettiFall var(--d) linear var(--delay) infinite;transform:rotate(var(--r))}
+@keyframes champBounce{from{transform:translateY(0) rotate(-4deg) scale(1)}to{transform:translateY(-10px) rotate(4deg) scale(1.06)}}
+@keyframes confettiFall{to{transform:translateY(125vh) rotate(720deg)}}
+@media (prefers-reduced-motion:reduce){.champion-trophy,.confetti-piece{animation:none}.confetti-piece{display:none}}
+</style>
+<style>
+:root{
+  --ink:#241d19;--paper:#f3ead2;--paper2:#e5d5ad;--gold:#8a682b;
+  --wine:#5b2635;--navy:#1e3345;--shadow:rgba(28,20,14,.28)
+}
+html{background:#241f1b}
+body{
+  color:var(--ink);
+  background:
+    repeating-linear-gradient(0deg,rgba(83,61,35,.035) 0 1px,transparent 1px 4px),
+    radial-gradient(circle at 50% 0,#fff8e8 0,#efe2c4 55%,#d6c49d 100%);
+  min-height:100vh
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.16;
+  background-image:linear-gradient(90deg,transparent 49.6%,rgba(66,45,25,.14) 50%,transparent 50.4%)
+}
+main{max-width:930px;margin:auto;padding:18px}
+h1{
+  font-family:Georgia,"Times New Roman",serif;letter-spacing:.12em;
+  text-shadow:0 1px #fff8e8;color:#2b2520
+}
+header,.top,.controls{position:relative}
+header:after{
+  content:"♪  ♩  ♫  ♬  ♩  ♪";
+  display:block;text-align:center;letter-spacing:.65em;color:var(--gold);
+  opacity:.8;margin:3px 0 9px;font-family:Georgia,serif
+}
+button,select{
+  border:2px solid #493b2d!important;border-radius:7px!important;
+  background:linear-gradient(#fffaf0,#dfcfaa)!important;color:#282019!important;
+  box-shadow:inset 0 0 0 1px #fff7df,0 2px 0 #a38b60;
+  font-family:Georgia,"Times New Roman",serif
+}
+button:hover{filter:brightness(1.04)}
+button:active{transform:translateY(1px);box-shadow:inset 0 0 0 1px #fff7df,0 1px 0 #a38b60}
+#status{
+  font-family:Georgia,"Times New Roman",serif;font-weight:700;
+  background:#2b3037;color:#fff7df;border:3px double #b99b55;
+  border-radius:8px;padding:9px 14px;box-shadow:0 4px 12px var(--shadow)
+}
+.board{
+  position:relative;padding:12px!important;border:6px double #72582c!important;border-radius:10px!important;
+  background:
+    linear-gradient(rgba(255,255,255,.12),rgba(0,0,0,.05)),
+    repeating-linear-gradient(90deg,#bda66f 0 2px,#cbb985 2px 5px)!important;
+  box-shadow:0 8px 22px var(--shadow),inset 0 0 0 3px #efe1b9
+}
+.board:before,.board:after{
+  position:absolute;color:#6e5425;font-family:Georgia,serif;font-size:17px;
+  background:var(--paper);padding:0 7px;z-index:3
+}
+.board:before{content:"𝄞  MUSIC TRIAD  𝄢";top:-14px;left:50%;transform:translateX(-50%)}
+.cell{
+  background:
+    linear-gradient(rgba(255,255,255,.7),rgba(255,255,255,.35)),
+    repeating-linear-gradient(0deg,transparent 0 17px,rgba(70,61,50,.13) 18px,transparent 19px)!important;
+  border:1px solid #806d4b!important;box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)
+}
+.card{
+  border-radius:9px!important;border:2px solid #3d3329!important;
+  background:
+    linear-gradient(rgba(255,255,255,.78),rgba(237,224,191,.92)),
+    repeating-linear-gradient(0deg,transparent 0 15px,rgba(66,58,49,.07) 16px,transparent 17px)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.22),inset 0 0 0 2px #fdf7e8!important;
+  font-family:Georgia,"Times New Roman",serif
+}
+.card.you,.you .card{box-shadow:0 3px 8px rgba(0,0,0,.22),inset 0 0 0 4px #315b78!important}
+.card.cpu,.cpu .card{box-shadow:0 3px 8px rgba(0,0,0,.22),inset 0 0 0 4px #873e4a!important}
+.hand{
+  padding:15px 10px 10px;border-top:4px double #8a6d38;margin-top:17px;
+  background:linear-gradient(90deg,transparent,rgba(255,248,229,.55),transparent)
+}
+.hand .pick{transition:transform .14s ease,filter .14s ease}
+.hand .pick:hover{transform:translateY(-5px)}
+.hand .pick.selected{transform:translateY(-8px);filter:drop-shadow(0 5px 5px rgba(0,0,0,.28))}
+.score,.scores{
+  font-family:Georgia,"Times New Roman",serif;font-weight:700;
+}
+.helpbar{border-top:1px solid rgba(91,68,39,.3);padding-top:13px}
+.helpbtn{background:linear-gradient(#f9f0d9,#dbc89b)!important}
+.modal{background:rgba(20,17,15,.76)!important}
+.modalbox{
+  background:
+    repeating-linear-gradient(0deg,rgba(92,67,36,.03) 0 1px,transparent 1px 4px),
+    #f4ead1!important;
+  border:6px double #72582c!important;border-radius:10px!important;
+  box-shadow:0 15px 45px rgba(0,0,0,.48)!important
+}
+.modal h2{letter-spacing:.06em;color:#382c20}
+.rulecallout{background:#e8d9b5!important;border:3px double #72582c!important}
+.specialbox{background:#eee1c2!important;border-color:#9b8250!important}
+.startoverlay{
+  background:
+    radial-gradient(circle at 50% 35%,rgba(255,250,232,.98),rgba(222,205,165,.98)),
+    #e7d7b3!important
+}
+.startbox{
+  position:relative;border:7px double #6d542a!important;border-radius:8px!important;
+  background:
+    repeating-linear-gradient(0deg,rgba(100,75,40,.035) 0 1px,transparent 1px 4px),
+    #f4ead1!important;
+  box-shadow:0 16px 45px rgba(45,32,20,.35)!important
+}
+.startbox:before,.startbox:after{
+  content:"◆";position:absolute;top:13px;color:#87682d;font-size:19px
+}
+.startbox:before{left:16px}.startbox:after{right:16px}
+.starttitle{
+  color:#28221d!important;font-size:48px!important;letter-spacing:.14em!important;
+  text-shadow:0 2px #fff9e9,0 4px 0 rgba(94,71,37,.16)
+}
+.startmusic{color:#7b5c27!important}
+.starttag{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:#584b3e!important}
+.startbtn{
+  background:linear-gradient(#3a4652,#202b35)!important;color:#fff6d9!important;
+  border:3px double #c4a45b!important;box-shadow:0 4px 0 #151c22!important;
+  letter-spacing:.08em
+}
+.startbtn:hover{filter:brightness(1.15)}
+.sw.you{background:#d7e6ef!important;border:1px solid #315b78}
+.sw.cpu{background:#edd7d9!important;border:1px solid #873e4a}
+
+@media(prefers-reduced-motion:reduce){.hand .pick{transition:none}}
+</style>
+
+
+<style>
+/* Captured-card feedback */
+.slot.capture-flash{position:relative;z-index:8;animation:captureGlow .65s ease-out}
+.slot.capture-flash .card{animation:captureFlip .65s cubic-bezier(.2,.75,.25,1);transform-origin:center}
+@keyframes captureGlow{
+  0%{filter:none}18%{filter:drop-shadow(0 0 4px #fff7b0) drop-shadow(0 0 14px #d5a12a);background:#fff0a0}
+  58%{filter:drop-shadow(0 0 10px #d5a12a)}100%{filter:none}
+}
+@keyframes captureFlip{
+  0%{transform:scaleX(1) scale(1)}30%{transform:scaleX(.07) scale(1.07)}
+  46%{transform:scaleX(.07) scale(1.07)}74%{transform:scaleX(1.04) scale(1.04)}
+  100%{transform:scaleX(1) scale(1)}
+}
+.music-burst{position:absolute;inset:0;pointer-events:none;z-index:30;overflow:visible}
+.music-burst span{position:absolute;left:50%;top:50%;font-family:Georgia,serif;font-weight:bold;color:#7a5b1e;text-shadow:0 1px #fff4c7;animation:noteBurst .75s ease-out forwards}
+.music-burst span:nth-child(1){--x:-40px;--y:-35px;font-size:22px}.music-burst span:nth-child(2){--x:36px;--y:-30px;font-size:19px}
+.music-burst span:nth-child(3){--x:-31px;--y:32px;font-size:18px}.music-burst span:nth-child(4){--x:39px;--y:29px;font-size:21px}
+@keyframes noteBurst{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.35)}18%{opacity:1}
+  100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1.15) rotate(18deg)}
+}
+@media(prefers-reduced-motion:reduce){.slot.capture-flash,.slot.capture-flash .card,.music-burst span{animation-duration:.14s}}
+
+.modechoices{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:18px 0 8px}.modebtn{font-size:20px;font-weight:800;padding:13px 22px;border:3px solid #3b2b18;border-radius:10px;background:#fffaf0;min-width:190px}.mp-panel{margin:18px auto 0;max-width:470px;padding:16px;border:2px solid #6f542d;border-radius:10px;background:#fffaf0}.mp-panel[hidden]{display:none}.mp-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0}.mp-code{font-family:Georgia,serif;font-size:36px;font-weight:800;letter-spacing:8px;margin:8px 0;color:#382c20}.mp-input{font:800 24px Georgia,serif;letter-spacing:5px;text-transform:uppercase;text-align:center;width:150px;padding:8px;border:2px solid #3b2b18;border-radius:8px}.mp-note{font-size:14px;line-height:1.4;color:#584b3e;margin:8px 0}.mp-error{min-height:20px;font-weight:700;color:#8a1f11;margin-top:8px}.modebadge{text-align:center;font:700 13px Georgia,serif;letter-spacing:.08em;margin:6px 0;color:#584b3e}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
+<style id="mobile-layout-authoritative">
+/* ONE authoritative narrow-phone layout. Desktop/tablet rules above remain unchanged. */
+@media screen and (max-width:600px){
+  html,body{margin:0!important;width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+  *,*::before,*::after{box-sizing:border-box!important}
+  .app{
+    width:100%!important;max-width:100%!important;
+    padding:8px max(8px,env(safe-area-inset-right)) 18px max(8px,env(safe-area-inset-left))!important;
+    overflow:visible!important
+  }
+  .top{display:flex!important;flex-wrap:wrap!important;gap:6px!important}
+  .title{font-size:28px!important}
+  .controls{max-width:100%!important;gap:5px!important}
+  .status{margin:7px 0!important}.score{margin:4px 0 6px!important}
+
+  .board{
+    width:calc(100vw - 24px)!important;
+    max-width:390px!important;
+    margin:8px auto 18px!important;
+    padding:4px!important;gap:4px!important;
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important
+  }
+  .slot{
+    width:auto!important;min-width:0!important;
+    aspect-ratio:.70!important;padding:2px!important
+  }
+  .card{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important}
+
+  .handtitle{clear:both!important;margin:6px 0 7px!important}
+  .hand{
+    width:100%!important;max-width:100%!important;
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:5px!important;padding:0!important;margin:0 auto!important
+  }
+  .hand .pick{
+    width:100%!important;max-width:none!important;min-width:0!important;
+    aspect-ratio:.70!important;padding:2px!important;margin:0!important
+  }
+  .hand .card{min-height:0!important}
+
+  .edge{width:38px!important;height:38px!important;font-size:24px!important}
+  .edge svg{display:block!important;max-width:38px!important;max-height:38px!important}
+  .t{top:5px!important}.b{bottom:5px!important}
+  .r{right:9px!important}.l{left:9px!important}
+
+  .helpbar{width:100%!important;max-width:100%!important;flex-wrap:wrap!important}
+  .modebtn{width:100%!important;min-width:0!important}
+  .mp-panel{width:100%!important;max-width:100%!important;padding:12px!important}
+}
+</style>
+
+<style id="title-help-modal-fix">
+/* Rules/Cheat Sheet must appear above the title-screen overlay too. */
+.modal{z-index:100000!important}
+.modal.open{display:flex!important}
+</style>
+
+<style id="selected-card-highlight">
+/* Persistent tap/click selection highlight — touch-friendly on iPhone/Android and desktop. */
+.hand .pick.sel{
+  position:relative;
+  transform:translateY(-6px)!important;
+  border:4px solid #a77b24!important;
+  border-radius:11px!important;
+  background:#fff2b8!important;
+  box-shadow:0 0 0 3px #fff4c7,0 0 0 6px #7b5c27,0 7px 12px rgba(0,0,0,.28)!important;
+  z-index:5;
+}
+.hand .pick.sel .card{
+  box-shadow:0 0 0 3px #d3a842,0 4px 10px rgba(0,0,0,.3),inset 0 0 0 2px #fff8dd!important;
+}
+@media screen and (max-width:600px){
+  .hand .pick.sel{transform:translateY(-3px)!important;border-width:3px!important;box-shadow:0 0 0 2px #fff4c7,0 0 0 4px #7b5c27,0 4px 7px rgba(0,0,0,.24)!important}
+}
+@media(prefers-reduced-motion:reduce){.hand .pick.sel{transition:none!important}}
+</style>
+
+<style id="rhythm-clash-style">
+#rhythmClash{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:rgba(18,14,10,.72);pointer-events:none;padding:18px}
+#rhythmClash.show{display:flex}
+.clash-stage{width:min(680px,94vw);text-align:center;color:#fff8df;font-family:Georgia,"Times New Roman",serif}
+.clash-label{font-size:clamp(18px,4vw,28px);font-weight:900;letter-spacing:.12em;text-shadow:0 2px 4px #000;margin-bottom:14px}
+.clash-cards{display:flex;align-items:center;justify-content:center;gap:clamp(30px,10vw,100px);min-height:190px}
+.clash-cards.vertical{flex-direction:column;gap:20px;min-height:330px}
+.clash-card{width:126px;height:176px;position:relative;filter:drop-shadow(0 8px 12px #0008)}
+.clash-card .card{width:100%;height:100%;min-height:0}
+#rhythmClash.bump-h .clash-card:first-child{animation:clashLeft .72s ease-in-out}
+#rhythmClash.bump-h .clash-card:last-child{animation:clashRight .72s ease-in-out}
+#rhythmClash.bump-v .clash-card:first-child{animation:clashTop .72s ease-in-out}
+#rhythmClash.bump-v .clash-card:last-child{animation:clashBottom .72s ease-in-out}
+.clash-impact{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.2);font:900 clamp(26px,7vw,48px) Georgia,serif;color:#ffe36e;text-shadow:0 0 8px #fff,0 0 22px #ff9d00,2px 3px #5b2e00;opacity:0;animation:clashImpact .72s ease-out .24s}
+.clash-result{margin-top:16px;background:#fff7dc;color:#332719;border:3px double #c7a34c;border-radius:12px;padding:12px 14px;box-shadow:0 7px 24px #0008;opacity:0;transform:translateY(8px);animation:resultIn .35s ease-out .52s forwards}
+.clash-equation{font-size:clamp(17px,4.3vw,25px);font-weight:800}.clash-outcome{font-size:clamp(19px,5vw,30px);font-weight:900;margin-top:5px;color:#6d4910}
+#rhythmClash.special .clash-label{font-size:clamp(25px,6vw,42px);color:#ffe36e}.special-symbol{font-size:64px;animation:specialPulse .85s ease-in-out}
+@keyframes clashLeft{0%,100%{transform:translateX(0)}48%{transform:translateX(44px) rotate(2deg)}58%{transform:translateX(31px)}}
+@keyframes clashRight{0%,100%{transform:translateX(0)}48%{transform:translateX(-44px) rotate(-2deg)}58%{transform:translateX(-31px)}}
+@keyframes clashTop{0%,100%{transform:translateY(0)}48%{transform:translateY(32px)}58%{transform:translateY(22px)}}
+@keyframes clashBottom{0%,100%{transform:translateY(0)}48%{transform:translateY(-32px)}58%{transform:translateY(-22px)}}
+@keyframes clashImpact{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}35%{opacity:1;transform:translate(-50%,-50%) scale(1.25)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7)}}
+@keyframes resultIn{to{opacity:1;transform:none}}@keyframes specialPulse{50%{transform:scale(1.28);filter:drop-shadow(0 0 18px #ffe36e)}}
+@media(max-width:520px){.clash-card{width:96px;height:136px}.clash-cards{gap:46px;min-height:150px}.clash-cards.vertical{min-height:280px}}
+.slot.rhythm-preview{position:relative;z-index:8;animation:rhythmPreviewFlash .25s ease-in-out 4;box-shadow:0 0 0 4px #ffe36e,0 0 24px 8px rgba(255,227,110,.9)!important}
+@keyframes rhythmPreviewFlash{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(1.65);transform:scale(1.055)}}
+@media(prefers-reduced-motion:reduce){#rhythmClash *{animation-duration:.12s!important;animation-delay:0s!important}}
+</style>
+
+<style id="safe-navigation-style">
+#homeBtn{font-weight:900}
+#new.tournament-locked{display:none!important}
+.confirm-overlay{position:fixed;inset:0;z-index:120000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,14,10,.78)}
+.confirm-overlay.show{display:flex}
+.confirm-box{width:min(92vw,460px);padding:24px;border:5px double #72582c;border-radius:12px;background:#f4ead1;text-align:center;box-shadow:0 18px 55px rgba(0,0,0,.5);font-family:Georgia,"Times New Roman",serif}
+.confirm-title{font-size:28px;font-weight:900;margin-bottom:12px}.confirm-message{font-size:18px;line-height:1.4;margin-bottom:20px}.confirm-actions{display:flex;justify-content:center;gap:12px}.confirm-actions button{min-width:110px;font-weight:900}
+</style>
+</head><body><div class='startoverlay' id='startScreen'>
+  <div class='startbox'>
+    <div class='startmusic'>♪ ♩ ♫</div>
+    <h1 class='starttitle'>MUSIC TRIAD</h1>
+    <p class='starttag'>A musical card game of rhythm and strategy.</p>
+    <div class='modechoices'><button class='modebtn' id='vsComputer' type='button'>VS COMPUTER</button><button class='modebtn' id='vsClassmate' type='button'>VS CLASSMATE</button><button class='modebtn' id='tournamentMode' type='button'>🏆 TOURNAMENT</button></div>
+<div class='tourney-panel' id='tourneyPanel' hidden>
+  <strong>🏆 Tournament Lobby</strong>
+  <p class='mp-note'>The teacher creates a tournament. Students join with the 5-character code and are automatically assigned a color name.</p>
+  <div class='mp-actions'><button id='createTournament' type='button'>TEACHER: CREATE TOURNAMENT</button><button id='showTournamentJoin' type='button'>STUDENT: JOIN TOURNAMENT</button></div>
+  <div id='createdTournament' hidden>
+    <div class='mp-note'>Tournament code:</div>
+    <div class='mp-code' id='tournamentCode'>-----</div>
+    <div class='mp-note'>Players in lobby: <strong id='tournamentCount'>0</strong></div>
+    <div class='tourney-roster' id='tournamentRoster'></div>
+    <button id='startTournament' type='button' disabled>START TOURNAMENT</button>
+  </div>
+  <div id='joinTournament' hidden>
+    <input id='tournamentJoinCode' class='mp-input' maxlength='5' placeholder='CODE' autocomplete='off' aria-label='Tournament code'>
+    <button id='joinTournamentNow' type='button'>JOIN</button>
+  </div>
+  <div id='studentTournamentStatus' hidden>
+    <div class='mp-note'>You are:</div>
+    <div class='tourney-color-name' id='assignedColor'>—</div>
+    <div class='mp-note'>Waiting for the teacher to start the tournament…</div>
+    <div class='tourney-roster' id='studentTournamentRoster'></div>
+  </div>
+  <div class='mp-error' id='tournamentError'></div>
+  <div class='tourney-match-ready' id='tournamentMatchReady' hidden>
+    <div class='tourney-match-ready-label'>🎵 YOUR MATCH IS READY</div>
+    <div class='tourney-match-ready-pair' id='tournamentMatchPair'>—</div>
+    <button id='playTournamentMatch' type='button' disabled>PREPARING MATCH…</button>
+    <div class='mp-note' id='tournamentMatchNote'></div>
+  </div>
+  <div class='tourney-bracket-wrap' id='tournamentBracketWrap' hidden>
+    <h3>🏆 TOURNAMENT BRACKET</h3>
+    <div class='tourney-bracket' id='tournamentBracket'></div>
+  </div>
+</div>
+<div class='mp-panel' id='mpPanel' hidden><strong>Play a Classmate</strong><p class='mp-note'>One player creates a game. The other joins with the 4-character code.</p>
+<div class='mp-actions'><button id='createRoom' type='button'>CREATE GAME</button><button id='showJoin' type='button'>JOIN GAME</button></div>
+<div id='createdRoom' hidden><div class='mp-note'>Your game code:</div><div class='mp-code' id='roomCode'>----</div><div class='mp-note' id='roomWait'>Waiting for your classmate…</div></div>
+<div id='joinRoom' hidden><input id='joinCode' class='mp-input' maxlength='4' placeholder='CODE' autocomplete='off' aria-label='Game code'> <button id='joinNow' type='button'>JOIN</button></div><div class='mp-error' id='mpError'></div></div>
+<div style='margin-top:12px'><button class='helpbtn' id='musicToggleStart' type='button'>🔊 Music: On</button></div>
+    <div class='startlinks'>
+      <button class='helpbtn' type='button' data-open='rulesModal'>📖 Rules</button>
+      <button class='helpbtn' type='button' data-open='cheatModal'>🎵 Cheat Sheet</button>
+    </div>
+  </div>
+</div>
+
+<div class='champion-splash' id='championSplash' hidden role='dialog' aria-modal='true' aria-labelledby='championTitle'>
+  <div class='champion-confetti' id='championConfetti' aria-hidden='true'></div>
+  <div class='champion-card'>
+    <div class='champion-trophy'>🏆</div>
+    <div class='champion-title' id='championTitle'>TOURNAMENT CHAMPION</div>
+    <div class='champion-name' id='championName'>RED</div>
+    <button class='champion-view' id='viewFinalBracket' type='button'>VIEW FINAL BRACKET</button>
+  </div>
+</div>
+<main class='app'><div class='modebadge' id='modeBadge'>VS COMPUTER</div><div class='top'><div><div class='title'>MUSIC TRIAD</div><div></div></div><div class='controls'><label>Computer: <select id='level'><option>Easy</option><option selected>Normal</option><option>Hard</option></select></label><button id='homeBtn' type='button'>⌂ Home</button><button id='new'>New Game</button></div></div><div class='score' id='score'></div><div class='status' id='status'></div><div class='legend'><span><i class='sw you'></i> You</span><span><i class='sw cpu'></i> Computer</span></div><div class='board' id='board'></div><div class='handtitle'>YOUR CARDS</div><div class='hand' id='hand'></div>
+<div class='helpbar'><button class='helpbtn' id='musicToggle' type='button'>🔊 Music: On</button><button class='helpbtn' data-open='rulesModal'>📖 Rules</button><button class='helpbtn' data-open='cheatModal'>🎵 Cheat Sheet</button></div>
+</main>
+<div class='modal' id='rulesModal' role='dialog' aria-modal='true'><div class='modalbox'><button class='closemodal' data-close aria-label='Close'>×</button><h2>How to Play Music Triad</h2><div class='rulecallout'>The card you play is the attacker!</div><ol class='ruleslist'><li>Choose a card, then place it in an empty square.</li><li>Your new card attacks opponent cards directly above, below, left, or right.</li><li><b>Notes battle notes. Rests battle rests.</b></li><li>The side with the <b>longer beat value</b> captures the shorter one.</li><li>Equal beat values <b>tie</b>, so nothing flips.</li><li>Only the card just played attacks. Cards already on the board do not attack back.</li></ol><h3>Legendary Cards</h3><div class='specialbox'><b>Fermata:</b> always wins on its side. It automatically captures when attacking and cannot be captured from that side when defending.</div><div class='specialbox'><b>Conductor:</b> when played, automatically flips every adjacent opponent card.</div><h3>Winning</h3><p>When all 9 spaces are filled, whoever controls more cards wins.</p></div></div>
+<div class='modal' id='cheatModal' role='dialog' aria-modal='true'><div class='modalbox'><button class='closemodal' data-close aria-label='Close'>×</button><h2>Music Triad Cheat Sheet</h2><div class='rulecallout'>Longer beat value captures shorter beat value.</div>
+<div class='cheatsection'><h3>Notes — weakest to strongest</h3>
+<div class='cheatrow'><div class='cheatsymbol' id='cheatSN'></div><div><div class='cheatname'>Sixteenth note — ¼ beat</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol'>♪</div><div><div class='cheatname'>Eighth note — ½ beat</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol'>♩</div><div><div class='cheatname'>Quarter note — 1 beat</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol'>♫</div><div><div class='cheatname'>Two eighth notes — 1 beat</div><div class='cheatnote'>Ties with a quarter note.</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol' id='cheat16'></div><div><div class='cheatname'>Four sixteenth notes — 1 beat</div><div class='cheatnote'>All four are connected. Ties with the other 1-beat note groups.</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol'>𝅗𝅥</div><div><div class='cheatname'>Half note — 2 beats</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol'>𝅝</div><div><div class='cheatname'>Whole note — 4 beats</div></div></div></div>
+<div class='cheatsection'><h3>Rests — weakest to strongest</h3>
+<div class='cheatrow'><div class='cheatsymbol' id='cheatER'></div><div><div class='cheatname'>Eighth rest — ½ beat</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol'>𝄽</div><div><div class='cheatname'>Quarter rest — 1 beat</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol' id='cheatHR'></div><div><div class='cheatname'>Half rest — 2 beats</div></div></div>
+<div class='cheatrow'><div class='cheatsymbol' id='cheatWR'></div><div><div class='cheatname'>Whole rest — 4 beats</div></div></div></div>
+<div class='cheatsection'><h3>Remember</h3><p><b>Quarter note = two eighth notes = four sixteenth notes.</b> All are 1 beat, so they tie each other.</p><p>A note can never capture a rest, and a rest can never capture a note.</p><div class='specialbox'><b>Fermata:</b> always wins on its side.</div><div class='specialbox'><b>Conductor:</b> flips every adjacent opponent card when played.</div></div></div></div>
+
+
+<div class="confirm-overlay" id="exitConfirm" role="dialog" aria-modal="true" aria-labelledby="exitConfirmTitle">
+ <div class="confirm-box"><div class="confirm-title" id="exitConfirmTitle">ARE YOU SURE?</div><div class="confirm-message" id="exitConfirmMessage"></div><div class="confirm-actions"><button id="exitConfirmYes" type="button">YES</button><button id="exitConfirmNo" type="button">NO</button></div></div>
+</div>
+<div id="rhythmClash" aria-live="polite"><div class="clash-stage"><div class="clash-label">RHYTHM CLASH!</div><div class="clash-cards"><div class="clash-card" id="clashAttacker"></div><div class="clash-impact">⚡ CLASH! ⚡</div><div class="clash-card" id="clashDefender"></div></div><div class="clash-result"><div class="clash-equation" id="clashEquation"></div><div class="clash-outcome" id="clashOutcome"></div></div></div></div>
+<script>
+const S={sn:{k:'n',v:.25},en:{k:'n',v:.5},qn:{k:'n',v:1},ee:{k:'n',v:1},ssss:{k:'n',v:1},hn:{k:'n',v:2},wn:{k:'n',v:4},er:{k:'r',v:.5},qr:{k:'r',v:1},hr:{k:'r',v:2},wr:{k:'r',v:4},f:{k:'f',v:99}};
+function svg(type){if(type==='er')return `<svg viewBox='-20.0 -800.0 402.0 601.0' width='34' height='44' aria-label='eighth rest'><path d="M155 269 251 609Q230 590 203.5 582.0Q177 574 151 574Q108 574 79.0 597.0Q50 620 50 663Q50 691 70.0 710.5Q90 730 121 730Q150 730 168.5 711.5Q187 693 187 662Q187 640 177 623Q177 617 189 617Q244 617 294 703H312L191 269Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='hr')return `<svg viewBox='-20.0 -448.0 823.0 274.0' width='36' height='30' aria-label='half rest'><path d="M50 244V268H210V378H573V268H733V244Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='wr')return `<svg viewBox='-20.0 -582.0 823.0 274.0' width='36' height='30' aria-label='whole rest'><path d="M50 488V512H733V488H573V378H210V488Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='f')return `<svg class='fermata' viewBox='0 0 60 40'><path d='M6 27 A24 24 0 0 1 54 27' fill='none' stroke='currentColor' stroke-width='5'/><circle cx='30' cy='27' r='5' fill='currentColor'/></svg>`;if(type==='ssss')return `<svg viewBox='0 0 92 54' width='58' height='38' aria-label='four connected sixteenth notes'><g fill='currentColor' stroke='currentColor' stroke-linecap='round'><ellipse cx='14' cy='43' rx='7' ry='5' transform='rotate(-18 14 43)'/><ellipse cx='36' cy='43' rx='7' ry='5' transform='rotate(-18 36 43)'/><ellipse cx='58' cy='43' rx='7' ry='5' transform='rotate(-18 58 43)'/><ellipse cx='80' cy='43' rx='7' ry='5' transform='rotate(-18 80 43)'/><path d='M18 9H22V41H18ZM40 9H44V41H40ZM62 9H66V41H62ZM84 9H88V41H84Z' stroke='none'/><path d='M20 9H86V14H20ZM20 18H86V23H20Z' stroke='none'/></g></svg>`;if(type==='sn')return `<svg viewBox='0 0 44 64' width='34' height='44' aria-label='single sixteenth note'><g fill='currentColor'><ellipse cx='13' cy='51' rx='9' ry='6' transform='rotate(-18 13 51)'/><rect x='20' y='8' width='4' height='43' rx='1'/><path d='M23 9 C35 12 40 20 36 30 C33 24 29 21 23 20 Z'/><path d='M23 21 C34 24 38 32 34 41 C31 35 28 32 23 31 Z'/></g></svg>`;if(type==='en')return `<svg viewBox='-19.0 -633.0 448.0 689.0' width='34' height='44' aria-label='eighth note'><path d="M194 563H231V514L305 420Q333 386 346.0 346.0Q359 306 359 265Q359 191 313 133H290Q318 193 318 254Q318 293 305.0 323.5Q292 354 272.0 373.0Q252 392 231 395V148Q231 88 195.5 51.0Q160 14 107 14Q79 14 65.0 27.5Q51 41 51 63Q51 89 65.0 110.0Q79 131 102.0 144.0Q125 157 150 157Q172 157 194 148Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='qn')return `<svg viewBox='-19.0 -633.0 320.0 689.0' width='34' height='44' aria-label='quarter note'><path d="M194 563H231V148Q231 88 195.5 51.0Q160 14 107 14Q79 14 65.0 27.5Q51 41 51 63Q51 89 65.0 110.0Q79 131 102.0 144.0Q125 157 150 157Q172 157 194 148Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='ee')return `<svg viewBox='-19.0 -636.0 624.0 727.0' width='48' height='42' aria-label='two eighth notes'><path d="M499 451 230 486V157Q230 100 196.5 62.0Q163 24 107 24Q51 24 51 72Q51 96 64.0 117.5Q77 139 99.0 152.5Q121 166 147 166Q172 166 194 157V566L535 521V113Q535 72 517.0 41.5Q499 11 471.5 -5.0Q444 -21 413 -21Q357 -21 357 28Q357 68 387.0 95.0Q417 122 455 122Q478 122 499 113Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='hn')return `<svg viewBox='-20.0 -1079.0 437.0 1150.0' width='34' height='44' aria-label='half note'><path d="M323 1009H347V169Q347 137 330.5 106.5Q314 76 286.0 52.0Q258 28 225.0 13.5Q192 -1 159 -1Q111 -1 80.5 21.5Q50 44 50 90Q50 141 78.5 181.5Q107 222 153.0 245.5Q199 269 251 269Q295 269 323 247ZM77 66Q77 56 84.5 48.0Q92 40 105 40Q140 40 192 69Q227 89 255.5 113.5Q284 138 301.0 162.5Q318 187 318 204Q318 215 312.5 222.5Q307 230 293 230Q274 230 247.0 218.0Q220 206 190.5 187.0Q161 168 135.0 145.5Q109 123 93.0 102.0Q77 81 77 66Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='wn')return `<svg viewBox='-20.0 -330.0 554.0 392.0' width='36' height='30' aria-label='whole note'><path d="M50 135Q50 172 77.0 200.0Q104 228 150.5 244.0Q197 260 253 260Q310 260 358.0 244.5Q406 229 435.0 201.0Q464 173 464 135Q464 96 436.0 67.5Q408 39 361.5 23.5Q315 8 259 8Q203 8 155.5 23.0Q108 38 79.0 66.5Q50 95 50 135ZM280 28Q314 28 326.5 53.0Q339 78 339 112Q339 147 324.5 176.0Q310 205 286.0 222.5Q262 240 232 240Q198 240 186.5 215.0Q175 190 175 156Q175 122 189.0 93.0Q203 64 226.5 46.0Q250 28 280 28Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;if(type==='qr')return `<svg viewBox='-19.0 -948.0 396.0 895.0' width='34' height='44' aria-label='quarter rest'><path d="M147 878 307 683Q257 624 230.0 581.0Q203 538 203 494Q203 457 227.0 416.5Q251 376 303 314L287 292Q243 320 205 320Q177 320 163.0 301.5Q149 283 149 257Q149 225 162.5 196.5Q176 168 199 142L186 123Q117 173 84.0 214.0Q51 255 51 303Q51 346 78.0 366.0Q105 386 143 386Q173 386 221 363V365L67 570Q168 659 168 736Q168 797 104 878Z" transform='scale(1,-1)' fill='currentColor'/></svg>`;return type}
+function conductorSVG(){return `<svg viewBox='0 0 100 130' width='70%' height='70%'><circle cx='48' cy='20' r='9' fill='currentColor'/><path d='M48 30V75M48 43L20 58M48 43L78 27M48 75L27 108M48 75L72 108' stroke='currentColor' stroke-width='6' stroke-linecap='round'/><path d='M78 27L94 8' stroke='currentColor' stroke-width='3'/></svg>`}
+const pool=['sn','en','qn','ee','ssss','hn','wn','er','qr','hr','wr'];function rand(a){return a[Math.floor(Math.random()*a.length)]}function card(owner,rare=false){let e=[rand(pool),rand(pool),rand(pool),rand(pool)];if(rare)e[Math.floor(Math.random()*4)]='f';return{owner,e}}
+function dealHands(){let h=[[card(0),card(0),card(0),card(0),card(0)],[card(1),card(1),card(1),card(1),card(1)]],slots=[];for(let o=0;o<2;o++)for(let i=0;i<5;i++)slots.push([o,i]);let s=rand(slots),roll=Math.random();if(roll<.1)h[s[0]][s[1]]={owner:s[0],cond:true,e:[]};else if(roll<.45)h[s[0]][s[1]]=card(s[0],true);return h}
+let board, hands, selected, turn, busy, starter=0, endSoundPlayed=false;
+let gameMode='computer',mpRoom=null,mpSeat=null,mpDb=null,mpRef=null,mpUid=null;
+const FIREBASE_CONFIG={apiKey:"AIzaSyBc742bvSjZ3VIrJlH8WZ1UlGGCKFFENho",authDomain:"music-triad.firebaseapp.com",databaseURL:"https://music-triad-default-rtdb.firebaseio.com",projectId:"music-triad",storageBucket:"music-triad.firebasestorage.app",messagingSenderId:"276316405918",appId:"1:276316405918:web:d09c11c2422cf6bf95bb8f"};
+function isMp(){return gameMode==='classmate'}
+function mpError(msg){const e=document.querySelector('#mpError');if(e)e.textContent=msg||''}
+function roomCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:4},()=>a[Math.floor(Math.random()*a.length)]).join('')}
+function clone(x){return JSON.parse(JSON.stringify(x))}
+function boardToWire(b){return b.map(c=>c?clone(c):{empty:true})}
+function boardFromWire(b){const a=Array.isArray(b)?b:Object.keys(b||{}).sort((x,y)=>Number(x)-Number(y)).map(k=>b[k]);return Array.from({length:9},(_,i)=>{const c=a&&a[i];return !c||c.empty?null:clone(c)})}
+function stateFromWire(s){return{board:boardFromWire(s&&s.board),hands:clone((s&&s.hands)||[[],[]]),turn:Number((s&&s.turn)??0),finished:!!(s&&s.finished)}}
+async function initFirebase(){if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);if(!firebase.auth().currentUser)await firebase.auth().signInAnonymously();mpUid=firebase.auth().currentUser.uid;mpDb=firebase.database()}
+function setModeBadge(){const b=document.querySelector('#modeBadge'),lab=document.querySelector('#level').closest('label');if(isMp()){b.textContent=mpRoom?`VS CLASSMATE • ROOM ${mpRoom}`:'VS CLASSMATE';lab.style.display='none'}else{b.textContent='VS COMPUTER';lab.style.display=''}}
+
+
+const TOURNAMENT_COLORS=['Red','Blue','Orange','Green','Cyan','Brown','Purple','Grey','Pink','Yellow','Teal','Lime','Navy','Maroon','Gold','Silver'];
+let tournamentRef=null,tournamentCodeValue='',tournamentColor='',tournamentIsHost=false,tournamentMatch=null,tournamentProvisioning=false;
+let tournamentGameContext=null,tournamentReportedRoom='';
+function tournamentCodeGen(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:5},()=>a[Math.floor(Math.random()*a.length)]).join('')}
+function tournamentError(msg){const e=document.querySelector('#tournamentError');if(e)e.textContent=msg||''}
+function closeModePanels(except){['mpPanel','tourneyPanel'].forEach(id=>{const el=document.querySelector('#'+id);if(el&&id!==except)el.hidden=true})}
+function renderTournamentRoster(players,targetId){
+  const box=document.querySelector('#'+targetId); if(!box)return;
+  box.innerHTML='';
+  const entries=Object.entries(players||{}).filter(([,uid])=>!!uid);
+  entries.forEach(([color])=>{const d=document.createElement('div');d.className='tourney-chip';d.textContent=color;box.appendChild(d)});
+  const count=document.querySelector('#tournamentCount');if(count)count.textContent=String(entries.length);
+  const start=document.querySelector('#startTournament');
+  if(start&&tournamentIsHost){start.disabled=entries.length<2;start.textContent=entries.length<2?'WAITING FOR PLAYERS…':'START TOURNAMENT'}
+}
+function renderTournamentBracket(bracket){
+  const wrap=document.querySelector('#tournamentBracketWrap'),box=document.querySelector('#tournamentBracket');
+  if(!wrap||!box)return;
+  if(!bracket||!bracket.round1){wrap.hidden=true;box.innerHTML='';return}
+  wrap.hidden=false;box.innerHTML='';
+  const matches=tournamentRound1Matches(bracket.round1);
+  matches.forEach((m,i)=>{
+    const card=document.createElement('div');card.className='tourney-match';
+    const a=m&&m.a?m.a:'—',b=m&&m.b?m.b:'BYE';
+    const result=m&&m.winner?`<div class='tourney-bye'>WINNER: ${m.winner}</div>`:(m&&m.b?'':"<div class='tourney-bye'>Automatic bye to the next round</div>");
+    card.innerHTML=`<div class='tourney-match-title'>ROUND 1 • MATCH ${i+1}</div><div class='tourney-player'>${a}</div><div class='tourney-vs'>VS</div><div class='tourney-player'>${b}</div>${result}`;
+    box.appendChild(card);
+  });
+  if(bracket.final){
+    const m=bracket.final,card=document.createElement('div');card.className='tourney-match';
+    const result=m.winner?`<div class='tourney-bye'>🏆 WINNER: ${m.winner}</div>`:'';
+    card.innerHTML=`<div class='tourney-match-title'>CHAMPIONSHIP</div><div class='tourney-player'>${m.a||'—'}</div><div class='tourney-vs'>VS</div><div class='tourney-player'>${m.b||'—'}</div>${result}`;
+    box.appendChild(card);
+  }
+  if(bracket.champion){
+    const champ=document.createElement('div');champ.className='tourney-match';
+    champ.innerHTML=`<div class='tourney-match-title'>TOURNAMENT CHAMPION</div><div class='tourney-player'>🏆 ${bracket.champion} 🏆</div>`;
+    box.appendChild(champ);
+  }
+}
+function tournamentRound1Matches(round1){
+  if(!round1)return [];
+  return Array.isArray(round1)?round1:Object.keys(round1).sort((a,b)=>Number(a)-Number(b)).map(k=>round1[k]);
+}
+function findMyTournamentMatch(t){
+  if(!tournamentColor||!t||!t.bracket)return null;
+  const f=t.bracket.final;
+  if(f&&!f.winner&&(f.a===tournamentColor||f.b===tournamentColor))return {round:'final',index:0,...f};
+  const matches=tournamentRound1Matches(t.bracket.round1);
+  for(let i=0;i<matches.length;i++){
+    const m=matches[i];
+    if(m&&!m.winner&&m.b&&(m.a===tournamentColor||m.b===tournamentColor))return {round:'round1',index:i,...m};
+  }
+  return null;
+}
+async function provisionTournamentRoom(match){
+  if(tournamentProvisioning||!tournamentRef||!match||match.a!==tournamentColor||match.roomCode)return;
+  tournamentProvisioning=true;
+  try{
+    await initFirebase();
+    for(let tries=0;tries<10;tries++){
+      const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),ls=await lobby.once('value');
+      if(ls.exists())continue;
+      const ref=mpDb.ref('rooms/'+code);
+      const fb=Array(9).fill(null),fh=dealHands();
+      await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,game:{board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false}});
+      await lobby.set(mpUid);
+      ref.child('p1Online').onDisconnect().set(false);
+      const matchPath=match.round==='final'?'bracket/final':'bracket/round1/'+match.index;
+      const matchRef=tournamentRef.child(matchPath);
+      const claim=await matchRef.child('roomCode').transaction(current=>current===null?code:current);
+      if(claim.committed&&claim.snapshot.val()===code){
+        await matchRef.child('status').set('ready');
+        return;
+      }
+      // Another room won the race. Remove only the room/lobby this client created.
+      await ref.remove(); await lobby.remove();
+      return;
+    }
+    throw new Error("Couldn't prepare the tournament match.");
+  }catch(e){tournamentError(e.message||String(e))}
+  finally{tournamentProvisioning=false}
+}
+function updateTournamentMatchUI(t){
+  const panel=document.querySelector('#tournamentMatchReady'),pair=document.querySelector('#tournamentMatchPair'),
+        btn=document.querySelector('#playTournamentMatch'),note=document.querySelector('#tournamentMatchNote');
+  if(!panel||!pair||!btn||!note)return;
+  const m=findMyTournamentMatch(t); tournamentMatch=m;
+  if(!m){panel.hidden=true;return}
+  panel.hidden=false;
+  if(!m.b){
+    pair.textContent=`${m.a} • BYE`;
+    btn.disabled=true;btn.textContent='BYE — NO MATCH NEEDED';
+    note.textContent='You automatically advance from this round.';
+    return;
+  }
+  pair.textContent=`${m.a}  VS  ${m.b}`;
+  if(m.roomCode){
+    btn.disabled=false;btn.textContent='PLAY MATCH';
+    note.textContent='Your tournament game is ready.';
+  }else{
+    btn.disabled=true;btn.textContent='PREPARING MATCH…';
+    note.textContent=m.a===tournamentColor?'Creating your game room…':`Waiting for ${m.a} to prepare the game…`;
+    if(m.a===tournamentColor)provisionTournamentRoom(m);
+  }
+}
+async function playTournamentMatch(){
+  unlockAudio();
+  try{
+    tournamentError(''); await initFirebase();
+    const m=tournamentMatch;
+    if(!m||!m.roomCode||!m.b)throw new Error('Your match is not ready yet.');
+    tournamentGameContext={round:m.round||'round1',index:m.index,a:m.a,b:m.b,roomCode:m.roomCode};setTournamentControls();
+    tournamentReportedRoom='';
+    const code=m.roomCode,ref=mpDb.ref('rooms/'+code);
+    gameMode='classmate';mpRoom=code;mpRef=ref;selected=null;busy=false;
+    if(tournamentColor===m.a){
+      mpSeat=0;
+      const room=await ref.once('value');
+      if(!room.exists()||room.child('p1').val()!==mpUid)throw new Error('Your tournament room could not be opened.');
+      await ref.child('p1Online').set(true);
+      ref.child('p1Online').onDisconnect().set(false);
+    }else if(tournamentColor===m.b){
+      mpSeat=1;
+      const claim=await ref.child('p2').transaction(current=>{if(current===null)return mpUid;if(current===mpUid)return current;return});
+      if(!claim.committed||claim.snapshot.val()!==mpUid)throw new Error('That tournament match already has two players.');
+      await ref.child('p2Online').set(true);
+      ref.child('p2Online').onDisconnect().set(false);
+    }else throw new Error('This is not your tournament match.');
+    setModeBadge();
+    listenRoom();
+  }catch(e){
+    gameMode='computer';mpRoom=null;mpSeat=null;mpRef=null;setModeBadge();
+    tournamentError(e.message||String(e));
+  }
+}
+
+async function advanceTournamentAfterResult(){
+  if(!tournamentRef)return;
+  const snap=await tournamentRef.once('value'),t=snap.val()||{},br=t.bracket||{};
+  if(br.champion)return;
+  const r1=tournamentRound1Matches(br.round1);
+  const winners=r1.map(m=>m&&(m.winner||(!m.b?m.a:null)));
+  if(!winners.length||winners.some(w=>!w))return;
+  if(winners.length===1){
+    await tournamentRef.update({'bracket/champion':winners[0],status:'finished'});return;
+  }
+  if(winners.length===2&&!br.final){
+    await tournamentRef.child('bracket/final').transaction(cur=>cur||{a:winners[0],b:winners[1],status:'waiting'});
+    return;
+  }
+}
+function returnToTournamentLobby(){
+  setTournamentControls();
+  // Leave the finished match view and reveal the live tournament bracket again.
+  stopMusic();
+  if(mpRef)mpRef.off();
+  mpRef=null;mpRoom=null;mpSeat=null;selected=null;busy=false;
+  gameMode='computer';setModeBadge();
+  tournamentGameContext=null;
+  startScreen.classList.remove('hidden');
+  closeModePanels('tourneyPanel');
+  const panel=document.querySelector('#tourneyPanel');
+  if(panel)panel.hidden=false;
+  requestAnimationFrame(()=>{startScreen.scrollTop=0;window.scrollTo(0,0)});
+}
+function scheduleTournamentReturn(){
+  if(scheduleTournamentReturn.pending)return;
+  scheduleTournamentReturn.pending=true;
+  setTimeout(()=>{
+    scheduleTournamentReturn.pending=false;
+    returnToTournamentLobby();
+  },1200);
+}
+
+async function reportTournamentResult(counts){
+  const ctx=tournamentGameContext;
+  if(!ctx||!tournamentRef||!mpRoom||tournamentReportedRoom===mpRoom)return;
+  if(!board.every(Boolean))return;
+  const winnerSeat=counts[0]>counts[1]?0:1;
+  const winner=winnerSeat===0?ctx.a:ctx.b;
+  const path=ctx.round==='final'?'bracket/final':'bracket/round1/'+ctx.index;
+  try{
+    const matchRef=tournamentRef.child(path);
+    const claim=await matchRef.child('winner').transaction(cur=>cur||winner);
+    if(!claim.committed||claim.snapshot.val()!==winner)return;
+    tournamentReportedRoom=mpRoom;
+    await matchRef.update({status:'complete',score0:counts[0],score1:counts[1]});
+    if(ctx.round==='final')await tournamentRef.update({'bracket/champion':winner,status:'finished'});
+    else await advanceTournamentAfterResult();
+    scheduleTournamentReturn();
+  }catch(e){console.error('Tournament result report failed:',e)}
+}
+
+
+let championSplashSeen='';
+function buildChampionConfetti(){
+  const box=document.querySelector('#championConfetti');if(!box||box.children.length)return;
+  const colors=['#ffe066','#ff6b6b','#4dabf7','#69db7c','#da77f2','#ffffff'];
+  for(let i=0;i<52;i++){
+    const p=document.createElement('i');p.className='confetti-piece';
+    p.style.setProperty('--x',`${Math.random()*100}%`);
+    p.style.setProperty('--d',`${2.7+Math.random()*2.8}s`);
+    p.style.setProperty('--delay',`${-Math.random()*5}s`);
+    p.style.setProperty('--r',`${Math.random()*360}deg`);
+    p.style.setProperty('--c',colors[i%colors.length]);box.appendChild(p);
+  }
+}
+function showChampionSplash(champion){
+  if(!champion||championSplashSeen===champion)return;
+  championSplashSeen=champion;
+  const splash=document.querySelector('#championSplash'),name=document.querySelector('#championName');
+  if(!splash||!name)return;
+  name.textContent=champion.toUpperCase();
+  const cssColor=champion.toLowerCase()==='grey'?'gray':champion.toLowerCase();
+  name.style.color=cssColor;
+  buildChampionConfetti();splash.hidden=false;
+}
+function hideChampionSplash(){const splash=document.querySelector('#championSplash');if(splash)splash.hidden=true}
+function resetChampionSplash(){championSplashSeen='';hideChampionSplash()}
+function listenTournament(ref){
+  if(tournamentRef)tournamentRef.off();
+  tournamentRef=ref;
+  ref.on('value',snap=>{
+    const t=snap.val();
+    if(!t){tournamentError('That tournament no longer exists.');return}
+    renderTournamentRoster(t.players,'tournamentRoster');
+    renderTournamentRoster(t.players,'studentTournamentRoster');
+    renderTournamentBracket(t.bracket);
+    updateTournamentMatchUI(t);
+    if(t.bracket&&t.bracket.champion)showChampionSplash(t.bracket.champion);
+    if(t.status==='started'){
+      const start=document.querySelector('#startTournament');
+      if(start){start.disabled=true;start.textContent='TOURNAMENT STARTED'}
+    }
+  });
+}
+function shuffled(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+async function startTournamentBracket(){
+  unlockAudio();
+  try{
+    tournamentError('');
+    if(!tournamentIsHost||!tournamentRef)throw new Error('Only the tournament host can start it.');
+    const snap=await tournamentRef.once('value'),t=snap.val()||{};
+    if(t.host!==mpUid)throw new Error('Only the tournament host can start it.');
+    if(t.status!=='waiting')return;
+    const colors=Object.keys(t.players||{}).filter(c=>t.players[c]);
+    if(colors.length<2)throw new Error('At least 2 players are needed.');
+    const order=shuffled(colors),round1=[];
+    for(let i=0;i<order.length;i+=2){const b=order[i+1]||null;round1.push({a:order[i],b,winner:b?null:order[i],status:b?'waiting':'complete'})}
+    await tournamentRef.update({status:'started',started:firebase.database.ServerValue.TIMESTAMP,bracket:{order,round1}});
+  }catch(e){tournamentError(e.message||String(e))}
+}
+async function createTournamentLobby(){
+  unlockAudio();
+  try{
+    tournamentError('');resetChampionSplash();await initFirebase();
+    for(let tries=0;tries<10;tries++){
+      const code=tournamentCodeGen(),ref=mpDb.ref('tournaments/'+code),snap=await ref.once('value');
+      if(snap.exists())continue;
+      await ref.set({host:mpUid,status:'waiting',created:firebase.database.ServerValue.TIMESTAMP,players:{}});
+      tournamentCodeValue=code;tournamentColor='';tournamentIsHost=true;listenTournament(ref);
+      document.querySelector('#createdTournament').hidden=false;
+      document.querySelector('#joinTournament').hidden=true;
+      document.querySelector('#studentTournamentStatus').hidden=true;
+      document.querySelector('#tournamentCode').textContent=code;
+      return;
+    }
+    throw new Error("Couldn't create a tournament. Try again.");
+  }catch(e){tournamentError(e.message||String(e))}
+}
+async function joinTournamentLobby(){
+  unlockAudio();
+  try{
+    tournamentError('');resetChampionSplash();await initFirebase();
+    const code=(document.querySelector('#tournamentJoinCode').value||'').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,5);
+    if(code.length!==5)throw new Error('Enter the 5-character tournament code.');
+    const ref=mpDb.ref('tournaments/'+code),snap=await ref.once('value');
+    if(!snap.exists())throw new Error("I couldn't find that tournament.");
+    if((snap.val()||{}).status!=='waiting')throw new Error('That tournament has already started.');
+    const existing=snap.child('players').val()||{};
+    let mine=Object.keys(existing).find(c=>existing[c]===mpUid);
+    if(!mine){
+      for(const color of TOURNAMENT_COLORS){
+        const claim=await ref.child('players/'+color).transaction(current=>current===null?mpUid:(current===mpUid?current:undefined));
+        if(claim.committed&&claim.snapshot.val()===mpUid){mine=color;break}
+      }
+    }
+    if(!mine)throw new Error('That tournament lobby is full.');
+    tournamentCodeValue=code;tournamentColor=mine;tournamentIsHost=false;listenTournament(ref);
+    document.querySelector('#createdTournament').hidden=true;
+    document.querySelector('#joinTournament').hidden=true;
+    document.querySelector('#studentTournamentStatus').hidden=false;
+    document.querySelector('#assignedColor').textContent=mine;
+  }catch(e){tournamentError(e.message||String(e))}
+}
+function reset(){endSoundPlayed=false;board=Array(9).fill(null);hands=dealHands();selected=null;busy=false;if(isMp()){turn=0;render();return}turn=starter;starter=1-starter;render();if(turn===1)setTimeout(cpuMove,650)}
+function cardEl(c){let d=document.createElement('div');let mine=isMp()?c.owner===mpSeat:c.owner===0;d.className='card '+(mine?'you':'cpu');if(c&&c.cond){d.innerHTML=`<div class='conductor'>${conductorSVG()}</div>`;return d}let edges=Array.isArray(c&&c.e)?c.e:[];['t','r','b','l'].forEach((p,i)=>{let x=document.createElement('div');x.className='edge '+p;x.innerHTML=edges[i]?svg(edges[i]):'';d.appendChild(x)});if(edges.includes('f')){let s=document.createElement('div');s.className='centerstar';s.textContent='☆';d.appendChild(s)}return d}
+function render(){
+ const mySeat=isMp()?mpSeat:0,myTurn=turn===mySeat;
+ let b=document.querySelector('#board');b.innerHTML='';
+ board.forEach((c,i)=>{let x=document.createElement('button');x.className='slot '+(c?'':'empty');x.disabled=busy||!myTurn||!!c;x.onclick=()=>humanPlace(i);if(c)x.appendChild(cardEl(c));b.appendChild(x)});
+ let h=document.querySelector('#hand');h.innerHTML='';
+ (hands[mySeat]||[]).forEach((c,i)=>{let x=document.createElement('button');x.className='pick '+(selected===i?'sel':'');x.disabled=busy||!myTurn;x.onclick=()=>{selected=i;render()};x.appendChild(cardEl(c));h.appendChild(x)});
+ let counts=board.reduce((a,c)=>{if(c)a[c.owner]++;return a},[0,0]),opp=1-mySeat;
+ document.querySelector('#score').textContent=isMp()?`You ${counts[mySeat]}  —  ${counts[opp]} Classmate`:`You ${counts[0]}  —  ${counts[1]} Computer`;
+ let over=board.every(Boolean);
+ if(over){if(!endSoundPlayed){endSoundPlayed=true;stopMusic();if(counts[mySeat]>counts[opp])fanfare('win');else if(counts[opp]>counts[mySeat])fanfare('lose')}document.querySelector('#status').textContent=counts[mySeat]>counts[opp]?'You win!':counts[opp]>counts[mySeat]?(isMp()?'Classmate wins.':'Computer wins.'):'Tie game!';if(tournamentGameContext)reportTournamentResult(counts)}
+ else if(isMp())document.querySelector('#status').textContent=myTurn?(selected===null?'YOUR TURN — choose a card.':'YOUR TURN — choose an empty square.'):"CLASSMATE'S TURN…";
+ else document.querySelector('#status').textContent=busy?'Computer is thinking…':turn===0?(selected===null?'Choose a card.':'Choose an empty square.'):'Computer turn…';
+}
+
+const RHYTHM_NAMES={sn:'SIXTEENTH NOTE',en:'EIGHTH NOTE',qn:'QUARTER NOTE',ee:'TWO EIGHTH NOTES',ssss:'FOUR SIXTEENTH NOTES',hn:'HALF NOTE',wn:'WHOLE NOTE',er:'EIGHTH REST',qr:'QUARTER REST',hr:'HALF REST',wr:'WHOLE REST',f:'FERMATA'};
+function beatText(v){return v===.25?'¼ beat':v===.5?'½ beat':v===1?'1 beat':v===2?'2 beats':v===4?'4 beats':String(v)+' beats'}
+let clashQueue=[],clashPlaying=false;
+function clashesActive(){return clashPlaying||clashQueue.length>0}
+function waitForClashes(){return new Promise(resolve=>{const check=()=>{if(!clashesActive())resolve();else setTimeout(check,80)};check()})}
+function clashCardHTML(c){const wrap=document.createElement('div');wrap.appendChild(cardEl(c));return wrap.innerHTML}
+function queueRhythmClashes(items){if(!items||!items.length)return;clashQueue.push(...items);playNextClash()}
+function clashInfo(att,ai,def,di,d){
+ if(att.cond)return{special:'conductor',att,def,d};
+ const A=att.e&&att.e[ai],D=def.e&&def.e[di];
+ if(A==='f')return{special:'fermata-attack',att,def,d,A,D};
+ if(D==='f')return{special:'fermata-defend',att,def,d,A,D};
+ if(!S[A]||!S[D]||S[A].k!==S[D].k)return null;
+ const av=S[A].v,dv=S[D].v;return{att,def,d,A,D,av,dv,result:av>dv?'capture':av===dv?'tie':'hold'};
+}
+function clashesForPlacement(i,c,before){
+ const out=[];
+ // The Conductor affects every adjacent opponent at once, so represent the
+ // whole encounter as one clash instead of queueing one animation per card.
+ if(c.cond){
+   const targets=[];
+   for(const [d,ai,di] of adj){const j=i+d;if(validAdj(i,j,d)&&before[j]&&before[j].owner!==c.owner)targets.push({index:j,card:before[j],d})}
+   if(targets.length)out.push({special:'conductor',att:c,attackerIndex:i,targets,defenderIndices:targets.map(t=>t.index)});
+   return out;
+ }
+ for(const [d,ai,di] of adj){const j=i+d;if(!validAdj(i,j,d)||!before[j]||before[j].owner===c.owner)continue;const info=clashInfo(c,ai,before[j],di,d);if(info){info.attackerIndex=i;info.defenderIndex=j;out.push(info)}}return out;
+}
+async function playNextClash(){
+ if(clashPlaying||!clashQueue.length)return;clashPlaying=true;const x=clashQueue.shift(),o=document.querySelector('#rhythmClash'),cards=o.querySelector('.clash-cards'),label=o.querySelector('.clash-label'),eq=o.querySelector('#clashEquation'),out=o.querySelector('#clashOutcome');
+ const boardSlots=document.querySelectorAll('#board .slot'),preview=[];
+ const previewIndices=x.special==='conductor'?[x.attackerIndex,...(x.defenderIndices||[])]:[x.attackerIndex,x.defenderIndex];
+ previewIndices.forEach(idx=>{const slot=boardSlots[idx];if(slot){slot.classList.add('rhythm-preview');preview.push(slot)}});
+ await new Promise(r=>setTimeout(r,1000));preview.forEach(slot=>slot.classList.remove('rhythm-preview'));
+ o.className='';cards.className='clash-cards';label.textContent='RHYTHM CLASH!';eq.textContent='';out.textContent='';
+ const attackerEl=document.querySelector('#clashAttacker'),defenderEl=document.querySelector('#clashDefender'),impact=cards.querySelector('.clash-impact');
+ attackerEl.innerHTML=clashCardHTML(x.att);
+ if(x.special==='conductor'){
+   // One dramatic Conductor event for the entire placement. All affected
+   // board cards flash together; the overlay is not repeated per neighbor.
+   defenderEl.innerHTML='';
+   cards.className='clash-cards';
+   cards.insertBefore(attackerEl,impact);cards.appendChild(defenderEl);
+   o.classList.add('show','special');
+ }else{
+   const vertical=Math.abs(x.d)===3,attackerFirst=(x.d===1||x.d===3);
+   defenderEl.innerHTML=clashCardHTML(x.def);
+   if(attackerFirst){cards.insertBefore(attackerEl,impact);cards.appendChild(defenderEl)}else{cards.insertBefore(defenderEl,impact);cards.appendChild(attackerEl)}
+   if(vertical)cards.classList.add('vertical');o.classList.add('show',vertical?'bump-v':'bump-h');
+ }
+ if(x.special){o.classList.add('special');
+   if(x.special==='conductor'){const n=(x.defenderIndices||[]).length;label.textContent='🎼 CONDUCTOR!';eq.textContent='EVERYONE FOLLOW THE CONDUCTOR!';out.textContent=n===1?'1 ADJACENT OPPONENT CAPTURED!':`${n} ADJACENT OPPONENTS CAPTURED!`}
+   else if(x.special==='fermata-attack'){label.textContent='𝄐 FERMATA!';eq.textContent='HOLD — NO BEAT COMPARISON';out.textContent='AUTO-CAPTURE!'}
+   else{label.textContent='𝄐 FERMATA HOLDS!';eq.textContent='THIS SIDE CANNOT BE CAPTURED';out.textContent='NO CAPTURE!'}
+ }else{const an=RHYTHM_NAMES[x.A]||x.A,dn=RHYTHM_NAMES[x.D]||x.D,sym=x.av>x.dv?'>':x.av<x.dv?'<':'=';eq.textContent=`${an} (${beatText(x.av)}) ${sym} ${dn} (${beatText(x.dv)})`;out.textContent=x.result==='capture'?`${an} CAPTURES!`:x.result==='tie'?'TIE — NO CAPTURE!':`${dn} HOLDS — NO CAPTURE!`}
+ await new Promise(r=>setTimeout(r,x.special==='conductor'?4500:4350));o.className='';clashPlaying=false;setTimeout(playNextClash,90);
+}
+const adj=[[-3,0,2],[1,1,3],[3,2,0],[-1,3,1]];function validAdj(i,j,d){return j>=0&&j<9&&!(d===1&&i%3===2)&&!(d===-1&&i%3===0)}function attacks(a,ai,d,def,di){if(!a||!def)return false;if(a.cond)return true;if(def.cond)return false;let A=a.e&&a.e[ai],D=def.e&&def.e[di];if(A==='f')return true;if(D==='f')return false;if(!S[A]||!S[D])return false;return S[A].k===S[D].k&&S[A].v>S[D].v}
+
+let pendingCaptureFX=[];
+let pendingCaptureSilent=false;function queueCaptureFX(indices,silent=false){pendingCaptureFX.push(...indices);pendingCaptureSilent=pendingCaptureSilent||silent;setTimeout(playPendingCaptureFX,30)}
+function captureSfx(){
+  if(!musicOn)return;
+  if(!musicCtx)musicCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(musicCtx.state==='suspended')musicCtx.resume();
+  const t=musicCtx.currentTime+.01;
+  [[76,0],[83,.055],[88,.11]].forEach(([n,off],k)=>{
+    const o=musicCtx.createOscillator(),g=musicCtx.createGain();
+    o.type=k===1?'triangle':'sine';o.frequency.value=hz(n);
+    g.gain.setValueAtTime(.0001,t+off);g.gain.exponentialRampToValueAtTime(.045,t+off+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,t+off+.16);o.connect(g).connect(musicCtx.destination);
+    o.start(t+off);o.stop(t+off+.18);
+  });
+}
+function playPendingCaptureFX(){
+  if(!pendingCaptureFX.length)return;
+  const list=[...new Set(pendingCaptureFX)],silent=pendingCaptureSilent;pendingCaptureFX=[];pendingCaptureSilent=false;
+  list.forEach((idx,k)=>setTimeout(()=>{
+    const slot=document.querySelectorAll('#board .slot')[idx];if(!slot)return;
+    slot.classList.remove('capture-flash');void slot.offsetWidth;slot.classList.add('capture-flash');
+    const burst=document.createElement('div');burst.className='music-burst';
+    burst.innerHTML='<span>♪</span><span>♫</span><span>♩</span><span>♪</span>';slot.appendChild(burst);
+    if(!silent)captureSfx();setTimeout(()=>{burst.remove();slot.classList.remove('capture-flash')},800);
+  },k*130));
+}
+
+function apply(i,c,b=board){const live=b===board,before=live?clone(b):null;b[i]=c;let flips=0,flipped=[];for(let [d,ai,di] of adj){let j=i+d;if(!validAdj(i,j,d)||!b[j]||b[j].owner===c.owner)continue;if(c.cond||attacks(c,ai,d,b[j],di)){b[j].owner=c.owner;flips++;flipped.push(j)}}if(live){if(before)queueRhythmClashes(clashesForPlacement(i,c,before));if(flipped.length)queueCaptureFX(flipped,!!c.cond)}return flips}
+let cpuTurnToken=0;
+async function humanPlace(i){if(selected===null||board[i]||clashesActive())return;if(isMp()){if(turn!==mpSeat||!mpRef)return;const sel=selected;selected=null;try{await mpRef.child('game').transaction(raw=>{if(!raw)return raw;const s=stateFromWire(raw);if(s.finished||s.turn!==mpSeat||s.board[i]||!s.hands[mpSeat]||!s.hands[mpSeat][sel])return;const c=s.hands[mpSeat].splice(sel,1)[0];c.owner=mpSeat;apply(i,c,s.board);s.turn=1-mpSeat;s.finished=s.board.every(Boolean);return{board:boardToWire(s.board),hands:clone(s.hands),turn:s.turn,moves:s.board.filter(Boolean).length,finished:s.finished}})}catch(e){document.querySelector('#status').textContent='Move failed — try again.'}return}let c=hands[0].splice(selected,1)[0];selected=null;apply(i,c);turn=1;busy=true;render();if(board.every(Boolean)){busy=false;render();return}
+const token=++cpuTurnToken;
+(async()=>{await waitForClashes();if(token!==cpuTurnToken||!busy||turn!==1)return;setTimeout(()=>{if(token===cpuTurnToken&&busy&&turn===1)cpuMove(token)},700)})();
+setTimeout(async()=>{if(token===cpuTurnToken&&busy&&turn===1){await waitForClashes();if(token===cpuTurnToken&&busy&&turn===1){console.warn('AI watchdog recovery');busy=false;cpuMove(token)}}},8000)}
+function cloneState(){return board.map(c=>c?{owner:c.owner,cond:c.cond,e:c.e?[...c.e]:[]}:null)}function evaluateMove(ci,pos,level){let b=cloneState(),c={...hands[1][ci],e:hands[1][ci].e?[...hands[1][ci].e]:[]};let flips=apply(pos,c,b);if(level==='Easy')return Math.random()*3+flips*.5;let score=flips*6;if(c.cond){let empties=board.filter(x=>!x).length;if(flips===0&&empties>2)score-=18;else if(flips===1&&empties>4)score-=4;else if(flips>=2)score+=flips*4;if(level==='Hard'&&flips<2&&empties>3)score-=5}else for(let [d,ai,di] of adj){let j=pos+d;if(!validAdj(pos,j,d)||!b[j]||b[j].owner!==0)continue;let edge=c.e[ai];if(edge==='f')score+=3;else if(S[edge])score+=S[edge].v*.25}if(level==='Hard'){for(let j=0;j<9;j++)if(!b[j])for(let hc of hands[0]){let test=b.map(x=>x?{owner:x.owner,cond:x.cond,e:x.e?[...x.e]:[]}:null),cc={...hc,e:hc.e?[...hc.e]:[]};score-=apply(j,cc,test)*1.6}}return score+Math.random()*.25}
+async function cpuMove(token=++cpuTurnToken){
+  if(board.every(Boolean)){busy=false;render();return}
+  try{
+    let level=document.querySelector('#level').value,moves=[];
+    hands[1].forEach((c,ci)=>board.forEach((x,pos)=>{
+      if(!x){let s;try{s=evaluateMove(ci,pos,level)}catch(err){console.error('AI evaluation skipped:',err);s=-9999}moves.push({ci,pos,s})}
+    }));
+    if(!moves.length){turn=0;return}
+    moves.sort((a,b)=>b.s-a.s);
+    let m=moves[0];
+    if(!Number.isFinite(m.s)||m.s<=-9999){
+      const legal=[];hands[1].forEach((c,ci)=>board.forEach((x,pos)=>{if(!x)legal.push({ci,pos})}));
+      if(!legal.length){turn=0;return}
+      m=legal[Math.floor(Math.random()*legal.length)]
+    }
+    let c=hands[1].splice(m.ci,1)[0];
+    if(!c||board[m.pos])throw new Error('Invalid computer move');
+    apply(m.pos,c);turn=0
+  }catch(e){
+    console.error('Computer move recovery:',e);
+    const legal=[];
+    (hands[1]||[]).forEach((c,ci)=>board.forEach((x,pos)=>{if(!x)legal.push({ci,pos})}));
+    if(legal.length){
+      const m=legal[Math.floor(Math.random()*legal.length)],c=hands[1].splice(m.ci,1)[0];
+      if(c)apply(m.pos,c)
+    }
+    turn=0
+  }finally{
+    if(clashesActive()){
+      await waitForClashes();
+    }
+    busy=false;if(token===cpuTurnToken)cpuTurnToken++;render()
+  }
+}
+async function startNewGameConfirmed(){stopMusic();stopEndCue();endSoundPlayed=false;if(isMp()&&mpRef){selected=null;const fb=Array(9).fill(null),fh=dealHands();await mpRef.child('game').set({board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false})}else reset();if(musicOn)startMusic()}
+document.querySelector('#new').onclick=()=>{if(tournamentRef||tournamentGameContext)return;showExitConfirm('newgame',startNewGameConfirmed)};
+document.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.open).classList.add('open')));
+function closeModal(m){m.classList.remove('open')}
+document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeModal(btn.closest('.modal'))));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m)}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.open').forEach(closeModal)});
+document.querySelector('#cheatSN').innerHTML=svg('sn');
+document.querySelector('#cheat16').innerHTML=svg('ssss');
+document.querySelector('#cheatER').innerHTML=svg('er');
+document.querySelector('#cheatHR').innerHTML=svg('hr');
+document.querySelector('#cheatWR').innerHTML=svg('wr');
+
+let musicOn=true,musicCtx=null,musicTimer=null;
+const MIDI_EVENTS=[[1.9672,41,0.3279,127,1],[2.2951,41,0.1639,80,1],[2.459,41,0.3279,127,1],[2.7869,41,0.1639,80,1],[2.9508,41,0.3279,127,1],[3.2787,41,0.1639,80,1],[3.4426,41,0.3279,127,1],[3.7705,41,0.1639,80,1],[3.9344,41,0.3279,127,1],[4.2623,41,0.1639,80,1],[4.4262,41,0.3279,127,1],[4.7541,41,0.1639,80,1],[4.918,41,0.3279,127,1],[5.2459,41,0.1639,80,1],[5.4098,41,0.3279,127,1],[5.7377,41,0.1639,80,1],[5.9016,41,0.3279,127,1],[6.2295,41,0.1639,80,1],[6.3934,39,0.0615,127,9],[6.3934,41,0.3279,127,1],[6.4262,39,0.0615,127,9],[6.7213,39,0.0615,110,9],[6.7213,41,0.1639,80,1],[6.7541,39,0.0615,110,9],[6.8852,41,0.3279,127,1],[7.2131,41,0.1639,80,1],[7.377,39,0.0615,127,9],[7.377,41,0.3279,127,1],[7.4098,39,0.0615,127,9],[7.7049,41,0.1639,80,1],[7.8688,41,0.3279,127,1],[8.1967,41,0.1639,80,1],[8.3607,39,0.0615,127,9],[8.3607,41,0.3279,127,1],[8.3934,39,0.0615,127,9],[8.6885,39,0.0615,110,9],[8.6885,41,0.1639,80,1],[8.7213,39,0.0615,110,9],[8.8525,41,0.3279,127,1],[9.1803,41,0.1639,80,1],[9.3443,39,0.0615,127,9],[9.3443,36,0.1639,127,11],[9.3443,24,0.1639,127,8],[9.3443,41,0.3279,127,1],[9.377,39,0.0615,127,9],[9.5082,38,0.1639,127,11],[9.5082,26,0.1639,127,8],[9.6721,39,0.1639,127,11],[9.6721,27,0.1639,127,8],[9.6721,41,0.1639,80,1],[9.8361,36,0.0615,100,9],[9.8361,29,0.1639,127,8],[9.8361,41,0.1639,127,11],[9.8361,41,0.3279,127,1],[9.8361,53,23.6065,100,3],[9.8361,60,23.6065,100,3],[10.1639,41,0.1639,127,11],[10.1639,41,0.1639,80,1],[10.1639,29,0.1639,127,8],[10.3279,41,0.1639,127,11],[10.3279,29,0.1639,127,8],[10.3279,41,0.3279,127,1],[10.6557,36,0.0615,80,9],[10.6557,29,0.1639,127,8],[10.6557,41,0.1639,80,1],[10.6557,41,0.1639,127,11],[10.8197,36,0.0615,100,9],[10.8197,29,0.1639,127,8],[10.8197,41,0.1639,127,11],[10.8197,41,0.3279,127,1],[11.1475,41,0.1639,127,11],[11.1475,41,0.1639,80,1],[11.1475,29,0.1639,127,8],[11.3115,41,0.1639,127,11],[11.3115,29,0.1639,127,8],[11.3115,41,0.3279,127,1],[11.6393,41,0.1639,127,11],[11.6393,41,0.1639,80,1],[11.6393,29,0.1639,127,8],[11.8033,36,0.0615,100,9],[11.8033,29,0.1639,127,8],[11.8033,41,0.1639,127,11],[11.8033,41,0.3279,127,1],[12.1311,41,0.1639,127,11],[12.1311,41,0.1639,80,1],[12.1311,29,0.1639,127,8],[12.2951,41,0.1639,127,11],[12.2951,29,0.1639,127,8],[12.2951,41,0.3279,127,1],[12.6229,36,0.0615,80,9],[12.6229,29,0.1639,127,8],[12.6229,41,0.1639,80,1],[12.6229,41,0.1639,127,11],[12.7869,36,0.0615,100,9],[12.7869,29,0.1639,127,8],[12.7869,41,0.1639,127,11],[12.7869,41,0.3279,127,1],[13.1147,41,0.1639,127,11],[13.1147,41,0.1639,80,1],[13.1147,29,0.1639,127,8],[13.2787,41,0.1639,127,11],[13.2787,29,0.1639,127,8],[13.2787,41,0.3279,127,1],[13.6065,36,0.0615,80,9],[13.6065,29,0.1639,127,8],[13.6065,41,0.1639,80,1],[13.6065,41,0.1639,127,11],[13.7705,36,0.0615,100,9],[13.7705,29,0.1639,127,8],[13.7705,41,0.1639,127,11],[13.7705,41,0.3279,127,1],[14.0984,41,0.1639,127,11],[14.0984,41,0.1639,80,1],[14.0984,29,0.1639,127,8],[14.2623,39,0.0615,127,9],[14.2623,29,0.1639,127,8],[14.2623,41,0.1639,127,11],[14.2623,41,0.3279,127,1],[14.2951,39,0.0615,127,9],[14.5902,39,0.0615,110,9],[14.5902,36,0.0615,80,9],[14.5902,29,0.1639,127,8],[14.5902,41,0.1639,80,1],[14.5902,41,0.1639,127,11],[14.6229,39,0.0615,110,9],[14.7541,36,0.0615,100,9],[14.7541,29,0.1639,127,8],[14.7541,41,0.1639,127,11],[14.7541,41,0.3279,127,1],[15.082,41,0.1639,127,11],[15.082,41,0.1639,80,1],[15.082,29,0.1639,127,8],[15.2459,39,0.0615,127,9],[15.2459,29,0.1639,127,8],[15.2459,41,0.1639,127,11],[15.2459,41,0.3279,127,1],[15.2787,39,0.0615,127,9],[15.5738,41,0.1639,127,11],[15.5738,41,0.1639,80,1],[15.5738,29,0.1639,127,8],[15.7377,36,0.0615,100,9],[15.7377,29,0.1639,127,8],[15.7377,41,0.1639,127,11],[15.7377,41,0.3279,127,1],[16.0656,41,0.1639,127,11],[16.0656,41,0.1639,80,1],[16.0656,29,0.1639,127,8],[16.2295,39,0.0615,127,9],[16.2295,29,0.1639,127,8],[16.2295,41,0.1639,127,11],[16.2295,41,0.3279,127,1],[16.2623,39,0.0615,127,9],[16.5574,39,0.0615,110,9],[16.5574,36,0.0615,80,9],[16.5574,29,0.1639,127,8],[16.5574,41,0.1639,80,1],[16.5574,41,0.1639,127,11],[16.5902,39,0.0615,110,9],[16.7213,36,0.0615,100,9],[16.7213,29,0.1639,127,8],[16.7213,41,0.1639,127,11],[16.7213,41,0.3279,127,1],[17.0492,41,0.1639,127,11],[17.0492,41,0.1639,80,1],[17.0492,29,0.1639,127,8],[17.2131,39,0.0615,127,9],[17.2131,24,0.1639,127,8],[17.2131,36,0.1639,127,11],[17.2131,41,0.3279,127,1],[17.2459,39,0.0615,127,9],[17.377,38,0.1639,127,11],[17.377,26,0.1639,127,8],[17.541,36,0.0615,80,9],[17.541,27,0.1639,127,8],[17.541,41,0.1639,80,1],[17.541,39,0.1639,127,11],[17.7049,36,0.0615,100,9],[17.7049,41,0.1639,127,11],[17.7049,53,0.1639,127,5],[17.7049,64,0.1639,64,0],[17.7049,65,0.1639,127,0],[17.7049,29,0.1639,127,8],[17.7049,48,0.1639,100,4],[17.7049,41,0.3279,127,1],[18.0328,41,0.1639,127,11],[18.0328,65,0.1639,127,0],[18.0328,29,0.1639,127,8],[18.0328,41,0.1639,80,1],[18.0328,53,0.1639,127,5],[18.0328,64,0.1639,64,0],[18.0328,48,0.1639,100,4],[18.1967,41,0.1639,127,11],[18.1967,64,0.1639,64,0],[18.1967,29,0.1639,127,8],[18.1967,65,0.1639,127,0],[18.1967,53,0.1639,127,5],[18.1967,50,0.1639,100,4],[18.1967,41,0.3279,127,1],[18.5246,36,0.0615,80,9],[18.5246,64,0.1639,64,0],[18.5246,65,0.1639,127,0],[18.5246,41,0.1639,127,11],[18.5246,41,0.1639,80,1],[18.5246,53,0.1639,127,5],[18.5246,29,0.1639,127,8],[18.5246,50,0.1639,100,4],[18.6885,36,0.0615,100,9],[18.6885,41,0.1639,127,11],[18.6885,56,0.1639,127,5],[18.6885,67,0.1639,64,0],[18.6885,68,0.1639,127,0],[18.6885,29,0.1639,127,8],[18.6885,48,0.1639,100,4],[18.6885,41,0.3279,127,1],[19.0164,41,0.1639,127,11],[19.0164,65,0.1639,127,0],[19.0164,29,0.1639,127,8],[19.0164,41,0.1639,80,1],[19.0164,53,0.1639,127,5],[19.0164,64,0.1639,64,0],[19.0164,48,0.1639,100,4],[19.1803,41,0.1639,127,11],[19.1803,64,0.1639,64,0],[19.1803,29,0.1639,127,8],[19.1803,65,0.1639,127,0],[19.1803,53,0.1639,127,5],[19.1803,50,0.1639,100,4],[19.1803,41,0.3279,127,1],[19.5082,41,0.1639,127,11],[19.5082,65,0.1639,127,0],[19.5082,29,0.1639,127,8],[19.5082,41,0.1639,80,1],[19.5082,53,0.1639,127,5],[19.5082,64,0.1639,64,0],[19.5082,50,0.1639,100,4],[19.6721,36,0.0615,100,9],[19.6721,41,0.1639,127,11],[19.6721,58,0.1639,127,5],[19.6721,69,0.1639,64,0],[19.6721,70,0.1639,127,0],[19.6721,29,0.1639,127,8],[19.6721,48,0.1639,100,4],[19.6721,41,0.3279,127,1],[20.0,41,0.1639,127,11],[20.0,65,0.1639,127,0],[20.0,29,0.1639,127,8],[20.0,41,0.1639,80,1],[20.0,53,0.1639,127,5],[20.0,64,0.1639,64,0],[20.0,48,0.1639,100,4],[20.1639,41,0.1639,127,11],[20.1639,64,0.1639,64,0],[20.1639,29,0.1639,127,8],[20.1639,65,0.1639,127,0],[20.1639,53,0.1639,127,5],[20.1639,50,0.1639,100,4],[20.1639,41,0.3279,127,1],[20.4918,36,0.0615,80,9],[20.4918,64,0.1639,64,0],[20.4918,65,0.1639,127,0],[20.4918,41,0.1639,127,11],[20.4918,41,0.1639,80,1],[20.4918,53,0.1639,127,5],[20.4918,29,0.1639,127,8],[20.4918,50,0.1639,100,4],[20.6557,36,0.0615,100,9],[20.6557,41,0.1639,127,11],[20.6557,56,0.1639,127,5],[20.6557,67,0.1639,64,0],[20.6557,68,0.1639,127,0],[20.6557,29,0.1639,127,8],[20.6557,48,0.1639,100,4],[20.6557,41,0.3279,127,1],[20.9836,41,0.1639,127,11],[20.9836,65,0.1639,127,0],[20.9836,29,0.1639,127,8],[20.9836,41,0.1639,80,1],[20.9836,53,0.1639,127,5],[20.9836,64,0.1639,64,0],[20.9836,48,0.1639,100,4],[21.1475,41,0.1639,127,11],[21.1475,62,0.1639,64,0],[21.1475,29,0.1639,127,8],[21.1475,63,0.1639,127,0],[21.1475,51,0.1639,127,5],[21.1475,50,0.1639,100,4],[21.1475,41,0.3279,127,1],[21.4754,36,0.0615,80,9],[21.4754,66,0.1639,64,0],[21.4754,67,0.1639,127,0],[21.4754,41,0.1639,127,11],[21.4754,41,0.1639,80,1],[21.4754,55,0.1639,127,5],[21.4754,29,0.1639,127,8],[21.4754,50,0.1639,100,4],[21.6393,36,0.0615,100,9],[21.6393,41,0.1639,127,11],[21.6393,53,0.1639,127,5],[21.6393,64,0.1639,64,0],[21.6393,65,0.1639,127,0],[21.6393,29,0.1639,127,8],[21.6393,48,0.1639,100,4],[21.6393,41,0.3279,127,1],[21.9672,41,0.1639,127,11],[21.9672,65,0.1639,127,0],[21.9672,29,0.1639,127,8],[21.9672,41,0.1639,80,1],[21.9672,53,0.1639,127,5],[21.9672,64,0.1639,64,0],[21.9672,48,0.1639,100,4],[22.1311,39,0.0615,127,9],[22.1311,29,0.1639,127,8],[22.1311,50,0.1639,100,4],[22.1311,41,0.1639,127,11],[22.1311,41,0.3279,127,1],[22.1639,39,0.0615,127,9],[22.459,36,0.0615,80,9],[22.459,39,0.0615,110,9],[22.459,64,0.1639,64,0],[22.459,53,0.1639,127,5],[22.459,65,0.1639,127,0],[22.459,41,0.1639,80,1],[22.459,50,0.1639,100,4],[22.459,41,0.1639,127,11],[22.459,29,0.1639,127,8],[22.4918,39,0.0615,110,9],[22.6229,36,0.0615,100,9],[22.6229,29,0.1639,127,8],[22.6229,48,0.1639,100,4],[22.6229,41,0.1639,127,11],[22.6229,41,0.3279,127,1],[22.9508,41,0.1639,127,11],[22.9508,48,0.1639,100,4],[22.9508,41,0.1639,80,1],[22.9508,29,0.1639,127,8],[23.1147,39,0.0615,127,9],[23.1147,29,0.1639,127,8],[23.1147,50,0.1639,100,4],[23.1147,41,0.1639,127,11],[23.1147,41,0.3279,127,1],[23.1475,39,0.0615,127,9],[23.4426,41,0.1639,127,11],[23.4426,50,0.1639,100,4],[23.4426,41,0.1639,80,1],[23.4426,29,0.1639,127,8],[23.6065,36,0.0615,100,9],[23.6065,41,0.1639,127,11],[23.6065,53,0.1639,127,5],[23.6065,64,0.1639,64,0],[23.6065,65,0.1639,127,0],[23.6065,29,0.1639,127,8],[23.6065,48,0.1639,100,4],[23.6065,41,0.3279,127,1],[23.9344,41,0.1639,127,11],[23.9344,48,0.1639,100,4],[23.9344,41,0.1639,80,1],[23.9344,29,0.1639,127,8],[24.0983,39,0.0615,127,9],[24.0983,29,0.1639,127,8],[24.0983,50,0.1639,100,4],[24.0983,41,0.1639,127,11],[24.0983,41,0.3279,127,1],[24.1311,39,0.0615,127,9],[24.4262,36,0.0615,80,9],[24.4262,39,0.0615,110,9],[24.4262,64,0.1639,64,0],[24.4262,53,0.1639,127,5],[24.4262,65,0.1639,127,0],[24.4262,41,0.1639,80,1],[24.4262,50,0.1639,100,4],[24.4262,41,0.1639,127,11],[24.4262,29,0.1639,127,8],[24.459,39,0.0615,110,9],[24.5902,36,0.0615,100,9],[24.5902,29,0.1639,127,8],[24.5902,48,0.1639,100,4],[24.5902,41,0.1639,127,11],[24.5902,41,0.3279,127,1],[24.918,41,0.1639,127,11],[24.918,48,0.1639,100,4],[24.918,41,0.1639,80,1],[24.918,29,0.1639,127,8],[25.082,39,0.0615,127,9],[25.082,24,0.1639,127,8],[25.082,50,0.1639,100,4],[25.082,36,0.1639,127,11],[25.082,41,0.3279,127,1],[25.1147,39,0.0615,127,9],[25.2459,38,0.1639,127,11],[25.2459,26,0.1639,127,8],[25.4098,36,0.0615,80,9],[25.4098,27,0.1639,127,8],[25.4098,50,0.1639,100,4],[25.4098,41,0.1639,80,1],[25.4098,39,0.1639,127,11],[25.5738,36,0.0615,100,9],[25.5738,41,0.1639,127,11],[25.5738,53,0.1639,127,5],[25.5738,64,0.1639,64,0],[25.5738,65,0.1639,127,0],[25.5738,29,0.1639,127,8],[25.5738,48,0.1639,100,4],[25.5738,41,0.3279,127,1],[25.9016,41,0.1639,127,11],[25.9016,65,0.1639,127,0],[25.9016,29,0.1639,127,8],[25.9016,41,0.1639,80,1],[25.9016,53,0.1639,127,5],[25.9016,64,0.1639,64,0],[25.9016,48,0.1639,100,4],[26.0656,41,0.1639,127,11],[26.0656,64,0.1639,64,0],[26.0656,29,0.1639,127,8],[26.0656,65,0.1639,127,0],[26.0656,53,0.1639,127,5],[26.0656,50,0.1639,100,4],[26.0656,41,0.3279,127,1],[26.3934,36,0.0615,80,9],[26.3934,64,0.1639,64,0],[26.3934,65,0.1639,127,0],[26.3934,41,0.1639,127,11],[26.3934,41,0.1639,80,1],[26.3934,53,0.1639,127,5],[26.3934,29,0.1639,127,8],[26.3934,50,0.1639,100,4],[26.5574,36,0.0615,100,9],[26.5574,41,0.1639,127,11],[26.5574,56,0.1639,127,5],[26.5574,67,0.1639,64,0],[26.5574,68,0.1639,127,0],[26.5574,29,0.1639,127,8],[26.5574,48,0.1639,100,4],[26.5574,41,0.3279,127,1],[26.8852,41,0.1639,127,11],[26.8852,65,0.1639,127,0],[26.8852,29,0.1639,127,8],[26.8852,41,0.1639,80,1],[26.8852,53,0.1639,127,5],[26.8852,64,0.1639,64,0],[26.8852,48,0.1639,100,4],[27.0492,41,0.1639,127,11],[27.0492,64,0.1639,64,0],[27.0492,29,0.1639,127,8],[27.0492,65,0.1639,127,0],[27.0492,53,0.1639,127,5],[27.0492,50,0.1639,100,4],[27.0492,41,0.3279,127,1],[27.377,41,0.1639,127,11],[27.377,65,0.1639,127,0],[27.377,29,0.1639,127,8],[27.377,41,0.1639,80,1],[27.377,53,0.1639,127,5],[27.377,64,0.1639,64,0],[27.377,50,0.1639,100,4],[27.541,36,0.0615,100,9],[27.541,41,0.1639,127,11],[27.541,58,0.1639,127,5],[27.541,69,0.1639,64,0],[27.541,70,0.1639,127,0],[27.541,29,0.1639,127,8],[27.541,48,0.1639,100,4],[27.541,41,0.3279,127,1],[27.8688,41,0.1639,127,11],[27.8688,65,0.1639,127,0],[27.8688,29,0.1639,127,8],[27.8688,41,0.1639,80,1],[27.8688,53,0.1639,127,5],[27.8688,64,0.1639,64,0],[27.8688,48,0.1639,100,4],[28.0328,41,0.1639,127,11],[28.0328,64,0.1639,64,0],[28.0328,29,0.1639,127,8],[28.0328,65,0.1639,127,0],[28.0328,53,0.1639,127,5],[28.0328,50,0.1639,100,4],[28.0328,41,0.3279,127,1],[28.3606,36,0.0615,80,9],[28.3606,64,0.1639,64,0],[28.3606,65,0.1639,127,0],[28.3606,41,0.1639,127,11],[28.3606,41,0.1639,80,1],[28.3606,53,0.1639,127,5],[28.3606,29,0.1639,127,8],[28.3606,50,0.1639,100,4],[28.5246,36,0.0615,100,9],[28.5246,41,0.1639,127,11],[28.5246,56,0.1639,127,5],[28.5246,67,0.1639,64,0],[28.5246,68,0.1639,127,0],[28.5246,29,0.1639,127,8],[28.5246,48,0.1639,100,4],[28.5246,41,0.3279,127,1],[28.8524,41,0.1639,127,11],[28.8524,65,0.1639,127,0],[28.8524,29,0.1639,127,8],[28.8524,41,0.1639,80,1],[28.8524,53,0.1639,127,5],[28.8524,64,0.1639,64,0],[28.8524,48,0.1639,100,4],[29.0164,41,0.1639,127,11],[29.0164,62,0.1639,64,0],[29.0164,29,0.1639,127,8],[29.0164,63,0.1639,127,0],[29.0164,51,0.1639,127,5],[29.0164,50,0.1639,100,4],[29.0164,41,0.3279,127,1],[29.3442,36,0.0615,80,9],[29.3442,66,0.1639,64,0],[29.3442,67,0.1639,127,0],[29.3442,41,0.1639,127,11],[29.3442,41,0.1639,80,1],[29.3442,55,0.1639,127,5],[29.3442,29,0.1639,127,8],[29.3442,50,0.1639,100,4],[29.5082,36,0.0615,100,9],[29.5082,41,0.1639,127,11],[29.5082,53,0.1639,127,5],[29.5082,64,0.1639,64,0],[29.5082,65,0.1639,127,0],[29.5082,29,0.1639,127,8],[29.5082,48,0.1639,100,4],[29.5082,41,0.3279,127,1],[29.836,41,0.1639,127,11],[29.836,65,0.1639,127,0],[29.836,29,0.1639,127,8],[29.836,41,0.1639,80,1],[29.836,53,0.1639,127,5],[29.836,64,0.1639,64,0],[29.836,48,0.1639,100,4],[30.0,39,0.0615,127,9],[30.0,29,0.1639,127,8],[30.0,50,0.1639,100,4],[30.0,41,0.1639,127,11],[30.0,41,0.3279,127,1],[30.0328,39,0.0615,127,9],[30.3279,36,0.0615,80,9],[30.3279,39,0.0615,110,9],[30.3279,64,0.1639,64,0],[30.3279,53,0.1639,127,5],[30.3279,65,0.1639,127,0],[30.3279,41,0.1639,80,1],[30.3279,50,0.1639,100,4],[30.3279,41,0.1639,127,11],[30.3279,29,0.1639,127,8],[30.3606,39,0.0615,110,9],[30.4918,36,0.0615,100,9],[30.4918,29,0.1639,127,8],[30.4918,48,0.1639,100,4],[30.4918,41,0.1639,127,11],[30.4918,41,0.3279,127,1],[30.8197,41,0.1639,127,11],[30.8197,48,0.1639,100,4],[30.8197,41,0.1639,80,1],[30.8197,29,0.1639,127,8],[30.9836,39,0.0615,127,9],[30.9836,29,0.1639,127,8],[30.9836,50,0.1639,100,4],[30.9836,41,0.1639,127,11],[30.9836,41,0.3279,127,1],[31.0164,39,0.0615,127,9],[31.3115,41,0.1639,127,11],[31.3115,50,0.1639,100,4],[31.3115,41,0.1639,80,1],[31.3115,29,0.1639,127,8],[31.4754,36,0.0615,100,9],[31.4754,41,0.1639,127,11],[31.4754,53,0.1639,127,5],[31.4754,64,0.1639,64,0],[31.4754,65,0.1639,127,0],[31.4754,29,0.1639,127,8],[31.4754,48,0.1639,100,4],[31.4754,41,0.3279,127,1],[31.8033,41,0.1639,127,11],[31.8033,48,0.1639,100,4],[31.8033,41,0.1639,80,1],[31.8033,29,0.1639,127,8],[31.9672,39,0.0615,127,9],[31.9672,29,0.1639,127,8],[31.9672,50,0.1639,100,4],[31.9672,41,0.1639,127,11],[31.9672,41,0.3279,127,1],[32.0,39,0.0615,127,9],[32.2951,36,0.0615,80,9],[32.2951,39,0.0615,110,9],[32.2951,64,0.1639,64,0],[32.2951,53,0.1639,127,5],[32.2951,65,0.1639,127,0],[32.2951,41,0.1639,80,1],[32.2951,50,0.1639,100,4],[32.2951,41,0.1639,127,11],[32.2951,29,0.1639,127,8],[32.3279,39,0.0615,110,9],[32.459,36,0.0615,100,9],[32.459,29,0.1639,127,8],[32.459,48,0.1639,100,4],[32.459,41,0.1639,127,11],[32.459,41,0.3279,127,1],[32.7869,41,0.1639,127,11],[32.7869,48,0.1639,100,4],[32.7869,41,0.1639,80,1],[32.7869,29,0.1639,127,8],[32.9508,39,0.0615,127,9],[32.9508,29,0.1639,127,8],[32.9508,50,0.1639,100,4],[32.9508,41,0.1639,127,11],[32.9508,41,0.3279,127,1],[32.9836,39,0.0615,127,9],[33.1147,43,0.1639,127,11],[33.1147,31,0.1639,127,8],[33.2787,36,0.0615,80,9],[33.2787,32,0.1639,127,8],[33.2787,41,0.1639,80,1],[33.2787,44,0.1639,127,11],[33.2787,50,0.1639,100,4],[33.4426,36,0.0615,100,9],[33.4426,56,0.1639,127,5],[33.4426,46,0.1639,127,11],[33.4426,67,0.1639,64,0],[33.4426,34,0.1639,127,8],[33.4426,68,0.1639,127,0],[33.4426,41,0.3279,127,1],[33.4426,65,0.9836,100,6],[33.4426,58,0.9836,100,7],[33.4426,53,3.9344,100,3],[33.4426,58,3.9344,100,3],[33.7705,46,0.1639,127,11],[33.7705,56,0.1639,127,5],[33.7705,53,0.1639,127,10],[33.7705,41,0.1639,80,1],[33.7705,34,0.1639,127,8],[33.7705,67,0.1639,64,0],[33.7705,68,0.1639,127,0],[33.9344,46,0.1639,127,11],[33.9344,55,0.1639,127,5],[33.9344,55,0.1639,127,10],[33.9344,67,0.1639,127,0],[33.9344,34,0.1639,127,8],[33.9344,66,0.1639,64,0],[33.9344,41,0.3279,127,1],[34.2623,36,0.0615,80,9],[34.2623,54,0.1639,127,5],[34.2623,53,0.1639,127,10],[34.2623,41,0.1639,80,1],[34.2623,65,0.1639,64,0],[34.2623,66,0.1639,127,0],[34.2623,34,0.1639,127,8],[34.2623,46,0.1639,127,11],[34.4262,36,0.0615,100,9],[34.4262,53,0.1639,127,10],[34.4262,53,0.1639,127,5],[34.4262,64,0.1639,64,0],[34.4262,34,0.1639,127,8],[34.4262,46,0.1639,127,11],[34.4262,65,0.1639,127,0],[34.4262,41,0.3279,127,1],[34.4262,60,0.9836,110,7],[34.4262,67,0.9836,110,6],[34.7541,46,0.1639,127,11],[34.7541,53,0.1639,127,5],[34.7541,53,0.1639,127,10],[34.7541,41,0.1639,80,1],[34.7541,34,0.1639,127,8],[34.7541,64,0.1639,64,0],[34.7541,65,0.1639,127,0],[34.918,46,0.1639,127,11],[34.918,51,0.1639,127,5],[34.918,51,0.1639,127,10],[34.918,63,0.1639,127,0],[34.918,34,0.1639,127,8],[34.918,62,0.1639,64,0],[34.918,41,0.3279,127,1],[35.2459,46,0.1639,127,11],[35.2459,53,0.1639,127,5],[35.2459,53,0.1639,127,10],[35.2459,41,0.1639,80,1],[35.2459,64,0.1639,64,0],[35.2459,34,0.1639,127,8],[35.2459,65,0.1639,127,0],[35.4098,36,0.0615,100,9],[35.4098,46,0.1639,127,11],[35.4098,34,0.1639,127,8],[35.4098,41,0.3279,127,1],[35.4098,61,0.9836,110,7],[35.4098,68,0.9836,110,6],[35.7377,46,0.1639,127,11],[35.7377,53,0.1639,127,5],[35.7377,53,0.1639,127,10],[35.7377,41,0.1639,80,1],[35.7377,34,0.1639,127,8],[35.7377,64,0.1639,64,0],[35.7377,65,0.1639,127,0],[35.9016,46,0.1639,127,11],[35.9016,51,0.1639,127,5],[35.9016,55,0.1639,127,10],[35.9016,63,0.1639,127,0],[35.9016,34,0.1639,127,8],[35.9016,62,0.1639,64,0],[35.9016,41,0.3279,127,1],[36.2295,36,0.0615,80,9],[36.2295,53,0.1639,127,10],[36.2295,53,0.1639,127,5],[36.2295,41,0.1639,80,1],[36.2295,64,0.1639,64,0],[36.2295,65,0.1639,127,0],[36.2295,34,0.1639,127,8],[36.2295,46,0.1639,127,11],[36.3934,36,0.0615,100,9],[36.3934,46,0.1639,127,11],[36.3934,63,0.1639,90,7],[36.3934,70,0.1639,90,6],[36.3934,34,0.1639,127,8],[36.3934,41,0.3279,127,1],[36.5574,65,0.1639,100,7],[36.5574,72,0.1639,100,6],[36.7213,46,0.1639,127,11],[36.7213,68,0.1639,100,7],[36.7213,64,0.1639,64,0],[36.7213,65,0.1639,127,0],[36.7213,53,0.1639,127,10],[36.7213,41,0.1639,80,1],[36.7213,75,0.1639,100,6],[36.7213,34,0.1639,127,8],[36.7213,53,0.1639,127,5],[36.8852,46,0.1639,127,11],[36.8852,70,0.1639,100,7],[36.8852,55,0.1639,127,10],[36.8852,77,0.1639,100,6],[36.8852,67,0.1639,64,0],[36.8852,68,0.1639,127,0],[36.8852,34,0.1639,127,8],[36.8852,56,0.1639,127,5],[36.8852,41,0.3279,127,1],[37.0492,44,0.1639,127,11],[37.0492,72,0.1639,110,7],[37.0492,80,0.1639,110,6],[37.0492,32,0.1639,127,8],[37.2131,36,0.0615,80,9],[37.2131,75,0.1639,120,7],[37.2131,64,0.1639,64,0],[37.2131,65,0.1639,127,0],[37.2131,41,0.1639,80,1],[37.2131,53,0.1639,127,5],[37.2131,31,0.1639,127,8],[37.2131,82,0.1639,120,6],[37.2131,43,0.1639,127,11],[37.2131,53,0.1639,127,10],[37.377,36,0.0615,100,9],[37.377,29,0.1639,127,8],[37.377,41,0.1639,127,11],[37.377,41,0.3279,127,1],[37.377,53,3.9344,100,3],[37.377,60,3.9344,100,3],[37.7049,41,0.1639,127,11],[37.7049,41,0.1639,80,1],[37.7049,29,0.1639,127,8],[37.8688,39,0.0615,127,9],[37.8688,29,0.1639,127,8],[37.8688,41,0.1639,127,11],[37.8688,41,0.3279,127,1],[37.9016,39,0.0615,127,9],[38.1967,36,0.0615,80,9],[38.1967,39,0.0615,110,9],[38.1967,29,0.1639,127,8],[38.1967,41,0.1639,80,1],[38.1967,41,0.1639,127,11],[38.2295,39,0.0615,110,9],[38.3606,36,0.0615,100,9],[38.3606,29,0.1639,127,8],[38.3606,41,0.1639,127,11],[38.3606,41,0.3279,127,1],[38.6885,41,0.1639,127,11],[38.6885,41,0.1639,80,1],[38.6885,29,0.1639,127,8],[38.8524,39,0.0615,127,9],[38.8524,29,0.1639,127,8],[38.8524,41,0.1639,127,11],[38.8524,41,0.3279,127,1],[38.8852,39,0.0615,127,9],[39.1803,41,0.1639,127,11],[39.1803,41,0.1639,80,1],[39.1803,29,0.1639,127,8],[39.3442,36,0.0615,100,9],[39.3442,29,0.1639,127,8],[39.3442,41,0.1639,127,11],[39.3442,41,0.3279,127,1],[39.6721,41,0.1639,127,11],[39.6721,41,0.1639,80,1],[39.6721,29,0.1639,127,8],[39.836,39,0.0615,127,9],[39.836,29,0.1639,127,8],[39.836,41,0.1639,127,11],[39.836,41,0.3279,127,1],[39.8688,39,0.0615,127,9],[40.1639,36,0.0615,80,9],[40.1639,39,0.0615,110,9],[40.1639,29,0.1639,127,8],[40.1639,41,0.1639,80,1],[40.1639,41,0.1639,127,11],[40.1967,39,0.0615,110,9],[40.3278,36,0.0615,100,9],[40.3278,29,0.1639,127,8],[40.3278,41,0.1639,127,11],[40.3278,41,0.3279,127,1],[40.6557,41,0.1639,127,11],[40.6557,41,0.1639,80,1],[40.6557,29,0.1639,127,8],[40.8196,39,0.0615,127,9],[40.8196,29,0.1639,127,8],[40.8196,41,0.1639,127,11],[40.8196,41,0.3279,127,1],[40.8524,39,0.0615,127,9],[40.9836,43,0.1639,127,11],[40.9836,31,0.1639,127,8],[41.1475,36,0.0615,80,9],[41.1475,41,0.1639,80,1],[41.1475,44,0.1639,127,11],[41.1475,32,0.1639,127,8],[41.3115,36,0.0615,100,9],[41.3115,56,0.1639,127,5],[41.3115,46,0.1639,127,11],[41.3115,67,0.1639,64,0],[41.3115,34,0.1639,127,8],[41.3115,68,0.1639,127,0],[41.3115,41,0.3279,127,1],[41.3115,65,0.9836,100,6],[41.3115,58,0.9836,100,7],[41.3115,53,3.9344,100,3],[41.3115,58,3.9344,100,3],[41.6393,46,0.1639,127,11],[41.6393,56,0.1639,127,5],[41.6393,53,0.1639,127,10],[41.6393,41,0.1639,80,1],[41.6393,34,0.1639,127,8],[41.6393,67,0.1639,64,0],[41.6393,68,0.1639,127,0],[41.8033,46,0.1639,127,11],[41.8033,55,0.1639,127,5],[41.8033,55,0.1639,127,10],[41.8033,67,0.1639,127,0],[41.8033,34,0.1639,127,8],[41.8033,66,0.1639,64,0],[41.8033,41,0.3279,127,1],[42.1311,36,0.0615,80,9],[42.1311,54,0.1639,127,5],[42.1311,53,0.1639,127,10],[42.1311,41,0.1639,80,1],[42.1311,65,0.1639,64,0],[42.1311,66,0.1639,127,0],[42.1311,34,0.1639,127,8],[42.1311,46,0.1639,127,11],[42.2951,36,0.0615,100,9],[42.2951,53,0.1639,127,10],[42.2951,53,0.1639,127,5],[42.2951,64,0.1639,64,0],[42.2951,34,0.1639,127,8],[42.2951,46,0.1639,127,11],[42.2951,65,0.1639,127,0],[42.2951,41,0.3279,127,1],[42.2951,60,0.9836,110,7],[42.2951,67,0.9836,110,6],[42.6229,46,0.1639,127,11],[42.6229,53,0.1639,127,5],[42.6229,53,0.1639,127,10],[42.6229,41,0.1639,80,1],[42.6229,34,0.1639,127,8],[42.6229,64,0.1639,64,0],[42.6229,65,0.1639,127,0],[42.7869,46,0.1639,127,11],[42.7869,51,0.1639,127,5],[42.7869,51,0.1639,127,10],[42.7869,63,0.1639,127,0],[42.7869,34,0.1639,127,8],[42.7869,62,0.1639,64,0],[42.7869,41,0.3279,127,1],[43.1147,46,0.1639,127,11],[43.1147,53,0.1639,127,5],[43.1147,53,0.1639,127,10],[43.1147,41,0.1639,80,1],[43.1147,64,0.1639,64,0],[43.1147,34,0.1639,127,8],[43.1147,65,0.1639,127,0],[43.2787,36,0.0615,100,9],[43.2787,46,0.1639,127,11],[43.2787,34,0.1639,127,8],[43.2787,41,0.3279,127,1],[43.2787,61,0.9836,110,7],[43.2787,68,0.9836,110,6],[43.6065,46,0.1639,127,11],[43.6065,53,0.1639,127,5],[43.6065,53,0.1639,127,10],[43.6065,41,0.1639,80,1],[43.6065,34,0.1639,127,8],[43.6065,64,0.1639,64,0],[43.6065,65,0.1639,127,0],[43.7705,46,0.1639,127,11],[43.7705,51,0.1639,127,5],[43.7705,55,0.1639,127,10],[43.7705,63,0.1639,127,0],[43.7705,34,0.1639,127,8],[43.7705,62,0.1639,64,0],[43.7705,41,0.3279,127,1],[44.0983,36,0.0615,80,9],[44.0983,53,0.1639,127,10],[44.0983,53,0.1639,127,5],[44.0983,41,0.1639,80,1],[44.0983,64,0.1639,64,0],[44.0983,65,0.1639,127,0],[44.0983,34,0.1639,127,8],[44.0983,46,0.1639,127,11],[44.2623,36,0.0615,100,9],[44.2623,46,0.1639,127,11],[44.2623,63,0.1639,90,7],[44.2623,70,0.1639,90,6],[44.2623,34,0.1639,127,8],[44.2623,41,0.3279,127,1],[44.4262,65,0.1639,100,7],[44.4262,72,0.1639,100,6],[44.5901,46,0.1639,127,11],[44.5901,68,0.1639,100,7],[44.5901,64,0.1639,64,0],[44.5901,65,0.1639,127,0],[44.5901,53,0.1639,127,10],[44.5901,41,0.1639,80,1],[44.5901,75,0.1639,100,6],[44.5901,34,0.1639,127,8],[44.5901,53,0.1639,127,5],[44.7541,46,0.1639,127,11],[44.7541,70,0.1639,100,7],[44.7541,55,0.1639,127,10],[44.7541,77,0.1639,100,6],[44.7541,67,0.1639,64,0],[44.7541,68,0.1639,127,0],[44.7541,34,0.1639,127,8],[44.7541,56,0.1639,127,5],[44.7541,41,0.3279,127,1],[44.918,44,0.1639,127,11],[44.918,72,0.1639,110,7],[44.918,80,0.1639,110,6],[44.918,32,0.1639,127,8],[45.0819,36,0.0615,80,9],[45.0819,75,0.1639,120,7],[45.0819,64,0.1639,64,0],[45.0819,65,0.1639,127,0],[45.0819,41,0.1639,80,1],[45.0819,53,0.1639,127,5],[45.0819,31,0.1639,127,8],[45.0819,82,0.1639,120,6],[45.0819,43,0.1639,127,11],[45.0819,53,0.1639,127,10],[45.2459,36,0.0615,100,9],[45.2459,41,0.1639,127,11],[45.2459,29,0.1639,127,8],[45.2459,41,0.3279,127,1],[45.2459,84,0.9836,127,6],[45.2459,77,0.9836,127,7],[45.2459,60,3.9344,100,3],[45.2459,53,3.9344,100,3],[45.5737,41,0.1639,127,11],[45.5737,41,0.1639,80,1],[45.5737,29,0.1639,127,8],[45.7377,39,0.0615,127,9],[45.7377,41,0.1639,127,11],[45.7377,29,0.1639,127,8],[45.7377,41,0.3279,127,1],[45.7705,39,0.0615,127,9],[46.0655,36,0.0615,80,9],[46.0655,39,0.0615,110,9],[46.0655,41,0.1639,80,1],[46.0655,41,0.1639,127,11],[46.0655,29,0.1639,127,8],[46.0983,39,0.0615,110,9],[46.2295,36,0.0615,100,9],[46.2295,41,0.1639,127,11],[46.2295,29,0.1639,127,8],[46.2295,41,0.3279,127,1],[46.2295,82,0.4918,127,6],[46.2295,75,0.4918,127,7],[46.5574,41,0.1639,127,11],[46.5574,41,0.1639,80,1],[46.5574,29,0.1639,127,8],[46.7213,39,0.0615,127,9],[46.7213,41,0.1639,127,11],[46.7213,29,0.1639,127,8],[46.7213,41,0.3279,127,1],[46.7213,84,0.9836,127,6],[46.7213,77,0.9836,127,7],[46.7541,39,0.0615,127,9],[47.0492,41,0.1639,127,11],[47.0492,41,0.1639,80,1],[47.0492,29,0.1639,127,8],[47.2131,36,0.0615,100,9],[47.2131,41,0.1639,127,11],[47.2131,29,0.1639,127,8],[47.2131,41,0.3279,127,1],[47.541,41,0.1639,127,11],[47.541,41,0.1639,80,1],[47.541,29,0.1639,127,8],[47.7049,39,0.0615,127,9],[47.7049,41,0.1639,127,11],[47.7049,29,0.1639,127,8],[47.7049,41,0.3279,127,1],[47.7049,80,0.4918,127,6],[47.7049,73,0.4918,127,7],[47.7377,39,0.0615,127,9],[48.0328,36,0.0615,80,9],[48.0328,39,0.0615,110,9],[48.0328,41,0.1639,80,1],[48.0328,41,0.1639,127,11],[48.0328,29,0.1639,127,8],[48.0655,39,0.0615,110,9],[48.1967,36,0.0615,100,9],[48.1967,41,0.1639,127,11],[48.1967,29,0.1639,127,8],[48.1967,41,0.3279,127,1],[48.1967,82,0.4918,127,6],[48.1967,75,0.4918,127,7],[48.5246,41,0.1639,127,11],[48.5246,41,0.1639,80,1],[48.5246,29,0.1639,127,8],[48.6885,39,0.0615,127,9],[48.6885,41,0.1639,127,11],[48.6885,29,0.1639,127,8],[48.6885,41,0.3279,127,1],[48.6885,70,0.4918,127,7],[48.6885,77,0.4918,127,6],[48.7213,39,0.0615,127,9],[48.8524,43,0.1639,127,11],[48.8524,31,0.1639,127,8],[49.0164,36,0.0615,80,9],[49.0164,41,0.1639,80,1],[49.0164,34,0.1639,127,8],[49.0164,46,0.1639,127,11],[49.1803,36,0.0615,100,9],[49.1803,36,0.1639,127,8],[49.1803,48,0.1639,127,11],[49.1803,43,0.1639,100,4],[49.1803,53,0.1639,127,10],[49.1803,41,0.3279,127,1],[49.1803,79,0.9836,127,6],[49.1803,65,0.9836,127,7],[49.1803,72,0.9836,127,7],[49.1803,55,3.9344,100,3],[49.1803,60,3.9344,100,3],[49.5082,48,0.1639,127,11],[49.5082,53,0.1639,127,10],[49.5082,43,0.1639,100,4],[49.5082,36,0.1639,127,8],[49.5082,41,0.1639,80,1],[49.6721,48,0.1639,127,11],[49.6721,55,0.1639,127,10],[49.6721,45,0.1639,100,4],[49.6721,36,0.1639,127,8],[49.6721,41,0.3279,127,1],[50.0,36,0.0615,80,9],[50.0,36,0.1639,127,8],[50.0,48,0.1639,127,11],[50.0,45,0.1639,100,4],[50.0,55,0.1639,127,10],[50.0,41,0.1639,80,1],[50.1639,36,0.0615,100,9],[50.1639,36,0.1639,127,8],[50.1639,48,0.1639,127,11],[50.1639,43,0.1639,100,4],[50.1639,53,0.1639,127,10],[50.1639,41,0.3279,127,1],[50.1639,77,0.4918,127,6],[50.1639,63,0.4918,127,7],[50.1639,70,0.4918,127,7],[50.4918,48,0.1639,127,11],[50.4918,53,0.1639,127,10],[50.4918,43,0.1639,100,4],[50.4918,36,0.1639,127,8],[50.4918,41,0.1639,80,1],[50.6557,48,0.1639,127,11],[50.6557,55,0.1639,127,10],[50.6557,45,0.1639,100,4],[50.6557,36,0.1639,127,8],[50.6557,41,0.3279,127,1],[50.6557,79,0.4918,127,6],[50.6557,65,0.4918,127,7],[50.6557,72,0.4918,127,7],[50.9836,48,0.1639,127,11],[50.9836,55,0.1639,127,10],[50.9836,45,0.1639,100,4],[50.9836,36,0.1639,127,8],[50.9836,41,0.1639,80,1],[51.1475,36,0.0615,100,9],[51.1475,36,0.1639,127,8],[51.1475,48,0.1639,127,11],[51.1475,43,0.1639,100,4],[51.1475,53,0.1639,127,10],[51.1475,41,0.3279,127,1],[51.1475,82,0.4918,127,6],[51.1475,68,0.4918,127,7],[51.1475,75,0.4918,127,7],[51.4754,48,0.1639,127,11],[51.4754,53,0.1639,127,10],[51.4754,43,0.1639,100,4],[51.4754,36,0.1639,127,8],[51.4754,41,0.1639,80,1],[51.6393,48,0.1639,127,11],[51.6393,55,0.1639,127,10],[51.6393,45,0.1639,100,4],[51.6393,36,0.1639,127,8],[51.6393,41,0.3279,127,1],[51.6393,84,0.9836,127,6],[51.6393,70,0.9836,127,7],[51.6393,77,0.9836,127,7],[51.9672,36,0.0615,80,9],[51.9672,36,0.1639,127,8],[51.9672,48,0.1639,127,11],[51.9672,45,0.1639,100,4],[51.9672,55,0.1639,127,10],[51.9672,41,0.1639,80,1],[52.1311,36,0.0615,100,9],[52.1311,36,0.1639,127,8],[52.1311,48,0.1639,127,11],[52.1311,43,0.1639,100,4],[52.1311,53,0.1639,127,10],[52.1311,41,0.3279,127,1],[52.459,48,0.1639,127,11],[52.459,53,0.1639,127,10],[52.459,43,0.1639,100,4],[52.459,36,0.1639,127,8],[52.459,41,0.1639,80,1],[52.6229,48,0.1639,127,11],[52.6229,55,0.1639,127,10],[52.6229,45,0.1639,100,4],[52.6229,36,0.1639,127,8],[52.6229,41,0.3279,127,1],[52.6229,79,0.4918,127,6],[52.6229,65,0.4918,127,7],[52.6229,72,0.4918,127,7],[52.9508,36,0.0615,80,9],[52.9508,36,0.1639,127,8],[52.9508,55,0.1639,127,10],[52.9508,45,0.1639,100,4],[52.9508,41,0.1639,80,1],[52.9508,48,0.1639,127,11],[53.1147,36,0.0615,100,9],[53.1147,53,0.123,127,10],[53.1147,41,0.123,100,4],[53.1147,34,0.1639,127,8],[53.1147,46,0.1639,127,11],[53.6065,73,0.4918,127,7],[53.6065,66,0.4918,127,7],[53.6065,80,0.4918,127,6],[54.0983,72,0.4918,127,7],[54.0983,65,0.4918,127,7],[54.0983,79,0.4918,127,6],[54.5901,71,0.4918,127,7],[54.5901,64,0.4918,127,7],[54.5901,78,0.4918,127,6],[55.0819,70,0.4918,127,7],[55.0819,63,0.4918,127,7],[55.0819,77,0.4918,127,6],[55.5737,69,0.4918,127,7],[55.5737,62,0.4918,127,7],[55.5737,76,0.4918,127,6],[56.0655,68,0.4918,127,7],[56.0655,61,0.4918,127,7],[56.0655,75,0.4918,127,6],[56.5573,67,0.4918,127,7],[56.5573,60,0.4918,127,7],[56.5573,74,0.4918,127,6],[57.0491,36,0.0615,100,9],[57.0491,29,0.1639,127,8],[57.0491,48,0.1639,100,4],[57.0491,41,0.1639,127,11],[57.0491,41,0.3279,127,1],[57.0491,53,5.9016,100,3],[57.0491,60,7.8688,100,3],[57.377,41,0.1639,127,11],[57.377,48,0.1639,100,4],[57.377,41,0.1639,80,1],[57.377,29,0.1639,127,8],[57.541,41,0.1639,127,11],[57.541,50,0.1639,100,4],[57.541,29,0.1639,127,8],[57.541,41,0.3279,127,1],[57.8688,36,0.0615,80,9],[57.8688,29,0.1639,127,8],[57.8688,50,0.1639,100,4],[57.8688,41,0.1639,80,1],[57.8688,41,0.1639,127,11],[58.0328,36,0.0615,100,9],[58.0328,29,0.1639,127,8],[58.0328,48,0.1639,100,4],[58.0328,41,0.1639,127,11],[58.0328,41,0.3279,127,1],[58.3606,41,0.1639,127,11],[58.3606,48,0.1639,100,4],[58.3606,41,0.1639,80,1],[58.3606,29,0.1639,127,8],[58.5246,41,0.1639,127,11],[58.5246,50,0.1639,100,4],[58.5246,29,0.1639,127,8],[58.5246,41,0.3279,127,1],[58.8524,41,0.1639,127,11],[58.8524,50,0.1639,100,4],[58.8524,41,0.1639,80,1],[58.8524,29,0.1639,127,8],[59.0164,36,0.0615,100,9],[59.0164,29,0.1639,127,8],[59.0164,48,0.1639,100,4],[59.0164,41,0.1639,127,11],[59.0164,41,0.3279,127,1],[59.3442,41,0.1639,127,11],[59.3442,48,0.1639,100,4],[59.3442,41,0.1639,80,1],[59.3442,29,0.1639,127,8],[59.5082,41,0.1639,127,11],[59.5082,50,0.1639,100,4],[59.5082,29,0.1639,127,8],[59.5082,41,0.3279,127,1],[59.836,36,0.0615,80,9],[59.836,29,0.1639,127,8],[59.836,50,0.1639,100,4],[59.836,41,0.1639,80,1],[59.836,41,0.1639,127,11],[60.0,36,0.0615,100,9],[60.0,29,0.1639,127,8],[60.0,48,0.1639,100,4],[60.0,41,0.1639,127,11],[60.0,41,0.3279,127,1],[60.3278,41,0.1639,127,11],[60.3278,48,0.1639,100,4],[60.3278,41,0.1639,80,1],[60.3278,29,0.1639,127,8],[60.4918,41,0.1639,127,11],[60.4918,50,0.1639,100,4],[60.4918,29,0.1639,127,8],[60.4918,41,0.3279,127,1],[60.8196,36,0.0615,80,9],[60.8196,29,0.1639,127,8],[60.8196,50,0.1639,100,4],[60.8196,41,0.1639,80,1],[60.8196,41,0.1639,127,11],[60.9836,36,0.0615,100,9],[60.9836,29,0.1639,127,8],[60.9836,48,0.1639,100,4],[60.9836,41,0.1639,127,11],[60.9836,41,0.3279,127,1],[61.3114,41,0.1639,127,11],[61.3114,48,0.1639,100,4],[61.3114,41,0.1639,80,1],[61.3114,29,0.1639,127,8],[61.4754,39,0.0615,127,9],[61.4754,29,0.1639,127,8],[61.4754,50,0.1639,100,4],[61.4754,41,0.1639,127,11],[61.4754,41,0.3279,127,1],[61.5082,39,0.0615,127,9],[61.8032,39,0.0615,110,9],[61.8032,36,0.0615,80,9],[61.8032,29,0.1639,127,8],[61.8032,41,0.1639,127,11],[61.8032,41,0.1639,80,1],[61.8032,50,0.1639,100,4],[61.836,39,0.0615,110,9],[61.9672,36,0.0615,100,9],[61.9672,29,0.1639,127,8],[61.9672,48,0.1639,100,4],[61.9672,41,0.1639,127,11],[61.9672,41,0.3279,127,1],[62.295,41,0.1639,127,11],[62.295,48,0.1639,100,4],[62.295,41,0.1639,80,1],[62.295,29,0.1639,127,8],[62.459,39,0.0615,127,9],[62.459,29,0.1639,127,8],[62.459,50,0.1639,100,4],[62.459,41,0.1639,127,11],[62.459,41,0.3279,127,1],[62.4918,39,0.0615,127,9],[62.7868,41,0.1639,127,11],[62.7868,41,0.1639,80,1],[62.7868,50,0.1639,100,4],[62.7868,29,0.1639,127,8],[62.9508,36,0.0615,100,9],[62.9508,24,0.1639,127,8],[62.9508,48,0.1639,100,4],[62.9508,36,0.1639,127,11],[62.9508,41,0.3279,127,1],[62.9508,55,1.9672,100,3],[63.2787,36,0.1639,127,11],[63.2787,48,0.1639,100,4],[63.2787,41,0.1639,80,1],[63.2787,24,0.1639,127,8],[63.4426,39,0.0615,127,9],[63.4426,26,0.1639,127,8],[63.4426,50,0.1639,100,4],[63.4426,38,0.1639,127,11],[63.4426,41,0.3279,127,1],[63.4754,39,0.0615,127,9],[63.7705,39,0.0615,110,9],[63.7705,36,0.0615,80,9],[63.7705,26,0.1639,127,8],[63.7705,38,0.1639,127,11],[63.7705,41,0.1639,80,1],[63.7705,50,0.1639,100,4],[63.8032,39,0.0615,110,9],[63.9344,36,0.0615,100,9],[63.9344,27,0.1639,127,8],[63.9344,48,0.1639,100,4],[63.9344,39,0.1639,127,11],[63.9344,41,0.3279,127,1],[64.2623,39,0.1639,127,11],[64.2623,48,0.1639,100,4],[64.2623,41,0.1639,80,1],[64.2623,27,0.1639,127,8],[64.4262,39,0.0615,127,9],[64.4262,28,0.1639,127,8],[64.4262,50,0.1639,100,4],[64.4262,40,0.1639,127,11],[64.4262,41,0.3279,127,1],[64.459,39,0.0615,127,9],[64.7541,36,0.0615,80,9],[64.7541,28,0.1639,127,8],[64.7541,41,0.1639,80,1],[64.7541,40,0.1639,127,11],[64.7541,50,0.1639,100,4],[64.918,36,0.0615,100,9],[64.918,41,0.1639,127,11],[64.918,53,0.1639,127,5],[64.918,64,0.1639,64,0],[64.918,65,0.1639,127,0],[64.918,29,0.1639,127,8],[64.918,48,0.1639,100,4],[64.918,41,0.3279,127,1],[64.918,53,15.7377,100,3],[64.918,60,15.7377,100,3],[65.2459,41,0.1639,127,11],[65.2459,65,0.1639,127,0],[65.2459,29,0.1639,127,8],[65.2459,41,0.1639,80,1],[65.2459,53,0.1639,127,5],[65.2459,64,0.1639,64,0],[65.2459,48,0.1639,100,4],[65.4098,41,0.1639,127,11],[65.4098,64,0.1639,64,0],[65.4098,29,0.1639,127,8],[65.4098,65,0.1639,127,0],[65.4098,53,0.1639,127,5],[65.4098,50,0.1639,100,4],[65.4098,41,0.3279,127,1],[65.7377,36,0.0615,80,9],[65.7377,64,0.1639,64,0],[65.7377,65,0.1639,127,0],[65.7377,41,0.1639,127,11],[65.7377,41,0.1639,80,1],[65.7377,53,0.1639,127,5],[65.7377,29,0.1639,127,8],[65.7377,50,0.1639,100,4],[65.9016,36,0.0615,100,9],[65.9016,41,0.1639,127,11],[65.9016,56,0.1639,127,5],[65.9016,67,0.1639,64,0],[65.9016,68,0.1639,127,0],[65.9016,29,0.1639,127,8],[65.9016,48,0.1639,100,4],[65.9016,41,0.3279,127,1],[66.2295,41,0.1639,127,11],[66.2295,65,0.1639,127,0],[66.2295,29,0.1639,127,8],[66.2295,41,0.1639,80,1],[66.2295,53,0.1639,127,5],[66.2295,64,0.1639,64,0],[66.2295,48,0.1639,100,4],[66.3934,41,0.1639,127,11],[66.3934,64,0.1639,64,0],[66.3934,29,0.1639,127,8],[66.3934,65,0.1639,127,0],[66.3934,53,0.1639,127,5],[66.3934,50,0.1639,100,4],[66.3934,41,0.3279,127,1],[66.7213,41,0.1639,127,11],[66.7213,65,0.1639,127,0],[66.7213,29,0.1639,127,8],[66.7213,41,0.1639,80,1],[66.7213,53,0.1639,127,5],[66.7213,64,0.1639,64,0],[66.7213,50,0.1639,100,4],[66.8852,36,0.0615,100,9],[66.8852,41,0.1639,127,11],[66.8852,58,0.1639,127,5],[66.8852,69,0.1639,64,0],[66.8852,70,0.1639,127,0],[66.8852,29,0.1639,127,8],[66.8852,48,0.1639,100,4],[66.8852,41,0.3279,127,1],[67.2131,41,0.1639,127,11],[67.2131,65,0.1639,127,0],[67.2131,29,0.1639,127,8],[67.2131,41,0.1639,80,1],[67.2131,53,0.1639,127,5],[67.2131,64,0.1639,64,0],[67.2131,48,0.1639,100,4],[67.377,41,0.1639,127,11],[67.377,64,0.1639,64,0],[67.377,29,0.1639,127,8],[67.377,65,0.1639,127,0],[67.377,53,0.1639,127,5],[67.377,50,0.1639,100,4],[67.377,41,0.3279,127,1],[67.7049,36,0.0615,80,9],[67.7049,64,0.1639,64,0],[67.7049,65,0.1639,127,0],[67.7049,41,0.1639,127,11],[67.7049,41,0.1639,80,1],[67.7049,53,0.1639,127,5],[67.7049,29,0.1639,127,8],[67.7049,50,0.1639,100,4],[67.8688,36,0.0615,100,9],[67.8688,41,0.1639,127,11],[67.8688,56,0.1639,127,5],[67.8688,67,0.1639,64,0],[67.8688,68,0.1639,127,0],[67.8688,29,0.1639,127,8],[67.8688,48,0.1639,100,4],[67.8688,41,0.3279,127,1],[68.1967,41,0.1639,127,11],[68.1967,65,0.1639,127,0],[68.1967,29,0.1639,127,8],[68.1967,41,0.1639,80,1],[68.1967,53,0.1639,127,5],[68.1967,64,0.1639,64,0],[68.1967,48,0.1639,100,4],[68.3606,41,0.1639,127,11],[68.3606,62,0.1639,64,0],[68.3606,29,0.1639,127,8],[68.3606,63,0.1639,127,0],[68.3606,51,0.1639,127,5],[68.3606,50,0.1639,100,4],[68.3606,41,0.3279,127,1],[68.6885,36,0.0615,80,9],[68.6885,66,0.1639,64,0],[68.6885,67,0.1639,127,0],[68.6885,41,0.1639,127,11],[68.6885,41,0.1639,80,1],[68.6885,55,0.1639,127,5],[68.6885,29,0.1639,127,8],[68.6885,50,0.1639,100,4],[68.8524,36,0.0615,100,9],[68.8524,41,0.1639,127,11],[68.8524,53,0.1639,127,5],[68.8524,64,0.1639,64,0],[68.8524,65,0.1639,127,0],[68.8524,29,0.1639,127,8],[68.8524,48,0.1639,100,4],[68.8524,41,0.3279,127,1],[69.1803,41,0.1639,127,11],[69.1803,65,0.1639,127,0],[69.1803,29,0.1639,127,8],[69.1803,41,0.1639,80,1],[69.1803,53,0.1639,127,5],[69.1803,64,0.1639,64,0],[69.1803,48,0.1639,100,4],[69.3442,39,0.0615,127,9],[69.3442,29,0.1639,127,8],[69.3442,50,0.1639,100,4],[69.3442,41,0.1639,127,11],[69.3442,41,0.3279,127,1],[69.377,39,0.0615,127,9],[69.6721,36,0.0615,80,9],[69.6721,39,0.0615,110,9],[69.6721,64,0.1639,64,0],[69.6721,53,0.1639,127,5],[69.6721,65,0.1639,127,0],[69.6721,41,0.1639,80,1],[69.6721,50,0.1639,100,4],[69.6721,41,0.1639,127,11],[69.6721,29,0.1639,127,8],[69.7049,39,0.0615,110,9],[69.836,36,0.0615,100,9],[69.836,29,0.1639,127,8],[69.836,48,0.1639,100,4],[69.836,41,0.1639,127,11],[69.836,41,0.3279,127,1],[70.1639,41,0.1639,127,11],[70.1639,48,0.1639,100,4],[70.1639,41,0.1639,80,1],[70.1639,29,0.1639,127,8],[70.3278,39,0.0615,127,9],[70.3278,29,0.1639,127,8],[70.3278,50,0.1639,100,4],[70.3278,41,0.1639,127,11],[70.3278,41,0.3279,127,1],[70.3606,39,0.0615,127,9],[70.6557,41,0.1639,127,11],[70.6557,50,0.1639,100,4],[70.6557,41,0.1639,80,1],[70.6557,29,0.1639,127,8],[70.8196,36,0.0615,100,9],[70.8196,41,0.1639,127,11],[70.8196,53,0.1639,127,5],[70.8196,64,0.1639,64,0],[70.8196,65,0.1639,127,0],[70.8196,29,0.1639,127,8],[70.8196,48,0.1639,100,4],[70.8196,41,0.3279,127,1],[71.1475,41,0.1639,127,11],[71.1475,48,0.1639,100,4],[71.1475,41,0.1639,80,1],[71.1475,29,0.1639,127,8],[71.3114,39,0.0615,127,9],[71.3114,29,0.1639,127,8],[71.3114,50,0.1639,100,4],[71.3114,41,0.1639,127,11],[71.3114,41,0.3279,127,1],[71.3442,39,0.0615,127,9],[71.6393,36,0.0615,80,9],[71.6393,39,0.0615,110,9],[71.6393,64,0.1639,64,0],[71.6393,53,0.1639,127,5],[71.6393,65,0.1639,127,0],[71.6393,41,0.1639,80,1],[71.6393,50,0.1639,100,4],[71.6393,41,0.1639,127,11],[71.6393,29,0.1639,127,8],[71.6721,39,0.0615,110,9],[71.8032,36,0.0615,100,9],[71.8032,29,0.1639,127,8],[71.8032,48,0.1639,100,4],[71.8032,41,0.1639,127,11],[71.8032,41,0.3279,127,1],[72.1311,41,0.1639,127,11],[72.1311,48,0.1639,100,4],[72.1311,41,0.1639,80,1],[72.1311,29,0.1639,127,8],[72.295,39,0.0615,127,9],[72.295,24,0.1639,127,8],[72.295,50,0.1639,100,4],[72.295,36,0.1639,127,11],[72.295,41,0.3279,127,1],[72.3278,39,0.0615,127,9],[72.459,38,0.1639,127,11],[72.459,26,0.1639,127,8],[72.6229,36,0.0615,80,9],[72.6229,27,0.1639,127,8],[72.6229,50,0.1639,100,4],[72.6229,41,0.1639,80,1],[72.6229,39,0.1639,127,11],[72.7868,36,0.0615,100,9],[72.7868,41,0.1639,127,11],[72.7868,53,0.1639,127,5],[72.7868,64,0.1639,64,0],[72.7868,65,0.1639,127,0],[72.7868,29,0.1639,127,8],[72.7868,48,0.1639,100,4],[72.7868,41,0.3279,127,1],[73.1147,41,0.1639,127,11],[73.1147,65,0.1639,127,0],[73.1147,29,0.1639,127,8],[73.1147,41,0.1639,80,1],[73.1147,53,0.1639,127,5],[73.1147,64,0.1639,64,0],[73.1147,48,0.1639,100,4],[73.2786,41,0.1639,127,11],[73.2786,64,0.1639,64,0],[73.2786,29,0.1639,127,8],[73.2786,65,0.1639,127,0],[73.2786,53,0.1639,127,5],[73.2786,50,0.1639,100,4],[73.2786,41,0.3279,127,1],[73.6065,36,0.0615,80,9],[73.6065,64,0.1639,64,0],[73.6065,65,0.1639,127,0],[73.6065,41,0.1639,127,11],[73.6065,41,0.1639,80,1],[73.6065,53,0.1639,127,5],[73.6065,29,0.1639,127,8],[73.6065,50,0.1639,100,4],[73.7704,36,0.0615,100,9],[73.7704,41,0.1639,127,11],[73.7704,56,0.1639,127,5],[73.7704,67,0.1639,64,0],[73.7704,68,0.1639,127,0],[73.7704,29,0.1639,127,8],[73.7704,48,0.1639,100,4],[73.7704,41,0.3279,127,1],[74.0983,41,0.1639,127,11],[74.0983,65,0.1639,127,0],[74.0983,29,0.1639,127,8],[74.0983,41,0.1639,80,1],[74.0983,53,0.1639,127,5],[74.0983,64,0.1639,64,0],[74.0983,48,0.1639,100,4],[74.2623,41,0.1639,127,11],[74.2623,64,0.1639,64,0],[74.2623,29,0.1639,127,8],[74.2623,65,0.1639,127,0],[74.2623,53,0.1639,127,5],[74.2623,50,0.1639,100,4],[74.2623,41,0.3279,127,1],[74.5901,41,0.1639,127,11],[74.5901,65,0.1639,127,0],[74.5901,29,0.1639,127,8],[74.5901,41,0.1639,80,1],[74.5901,53,0.1639,127,5],[74.5901,64,0.1639,64,0],[74.5901,50,0.1639,100,4],[74.7541,36,0.0615,100,9],[74.7541,41,0.1639,127,11],[74.7541,58,0.1639,127,5],[74.7541,69,0.1639,64,0],[74.7541,70,0.1639,127,0],[74.7541,29,0.1639,127,8],[74.7541,48,0.1639,100,4],[74.7541,41,0.3279,127,1],[75.0819,41,0.1639,127,11],[75.0819,65,0.1639,127,0],[75.0819,29,0.1639,127,8],[75.0819,41,0.1639,80,1],[75.0819,53,0.1639,127,5],[75.0819,64,0.1639,64,0],[75.0819,48,0.1639,100,4],[75.2459,41,0.1639,127,11],[75.2459,64,0.1639,64,0],[75.2459,29,0.1639,127,8],[75.2459,65,0.1639,127,0],[75.2459,53,0.1639,127,5],[75.2459,50,0.1639,100,4],[75.2459,41,0.3279,127,1],[75.5737,36,0.0615,80,9],[75.5737,64,0.1639,64,0],[75.5737,65,0.1639,127,0],[75.5737,41,0.1639,127,11],[75.5737,41,0.1639,80,1],[75.5737,53,0.1639,127,5],[75.5737,29,0.1639,127,8],[75.5737,50,0.1639,100,4],[75.7377,36,0.0615,100,9],[75.7377,41,0.1639,127,11],[75.7377,56,0.1639,127,5],[75.7377,67,0.1639,64,0],[75.7377,68,0.1639,127,0],[75.7377,29,0.1639,127,8],[75.7377,48,0.1639,100,4],[75.7377,41,0.3279,127,1],[76.0655,41,0.1639,127,11],[76.0655,65,0.1639,127,0],[76.0655,29,0.1639,127,8],[76.0655,41,0.1639,80,1],[76.0655,53,0.1639,127,5],[76.0655,64,0.1639,64,0],[76.0655,48,0.1639,100,4],[76.2295,41,0.1639,127,11],[76.2295,62,0.1639,64,0],[76.2295,29,0.1639,127,8],[76.2295,63,0.1639,127,0],[76.2295,51,0.1639,127,5],[76.2295,50,0.1639,100,4],[76.2295,41,0.3279,127,1],[76.5573,36,0.0615,80,9],[76.5573,66,0.1639,64,0],[76.5573,67,0.1639,127,0],[76.5573,41,0.1639,127,11],[76.5573,41,0.1639,80,1],[76.5573,55,0.1639,127,5],[76.5573,29,0.1639,127,8],[76.5573,50,0.1639,100,4],[76.7213,36,0.0615,100,9],[76.7213,41,0.1639,127,11],[76.7213,53,0.1639,127,5],[76.7213,64,0.1639,64,0],[76.7213,65,0.1639,127,0],[76.7213,29,0.1639,127,8],[76.7213,48,0.1639,100,4],[76.7213,41,0.3279,127,1],[77.0491,41,0.1639,127,11],[77.0491,65,0.1639,127,0],[77.0491,29,0.1639,127,8],[77.0491,41,0.1639,80,1],[77.0491,53,0.1639,127,5],[77.0491,64,0.1639,64,0],[77.0491,48,0.1639,100,4],[77.2131,39,0.0615,127,9],[77.2131,29,0.1639,127,8],[77.2131,50,0.1639,100,4],[77.2131,41,0.1639,127,11],[77.2131,41,0.3279,127,1],[77.2459,39,0.0615,127,9],[77.5409,36,0.0615,80,9],[77.5409,39,0.0615,110,9],[77.5409,64,0.1639,64,0],[77.5409,53,0.1639,127,5],[77.5409,65,0.1639,127,0],[77.5409,41,0.1639,80,1],[77.5409,50,0.1639,100,4],[77.5409,41,0.1639,127,11],[77.5409,29,0.1639,127,8],[77.5737,39,0.0615,110,9],[77.7049,36,0.0615,100,9],[77.7049,29,0.1639,127,8],[77.7049,48,0.1639,100,4],[77.7049,41,0.1639,127,11],[77.7049,41,0.3279,127,1],[78.0327,41,0.1639,127,11],[78.0327,48,0.1639,100,4],[78.0327,41,0.1639,80,1],[78.0327,29,0.1639,127,8],[78.1967,39,0.0615,127,9],[78.1967,29,0.1639,127,8],[78.1967,50,0.1639,100,4],[78.1967,41,0.1639,127,11],[78.1967,41,0.3279,127,1],[78.2295,39,0.0615,127,9],[78.5245,41,0.1639,127,11],[78.5245,50,0.1639,100,4],[78.5245,41,0.1639,80,1],[78.5245,29,0.1639,127,8],[78.6885,36,0.0615,100,9],[78.6885,41,0.1639,127,11],[78.6885,53,0.1639,127,5],[78.6885,64,0.1639,64,0],[78.6885,65,0.1639,127,0],[78.6885,29,0.1639,127,8],[78.6885,48,0.1639,100,4],[78.6885,41,0.3279,127,1],[79.0163,41,0.1639,127,11],[79.0163,48,0.1639,100,4],[79.0163,41,0.1639,80,1],[79.0163,29,0.1639,127,8],[79.1803,39,0.0615,127,9],[79.1803,29,0.1639,127,8],[79.1803,50,0.1639,100,4],[79.1803,41,0.1639,127,11],[79.1803,41,0.3279,127,1],[79.2131,39,0.0615,127,9],[79.5082,36,0.0615,80,9],[79.5082,39,0.0615,110,9],[79.5082,64,0.1639,64,0],[79.5082,53,0.1639,127,5],[79.5082,65,0.1639,127,0],[79.5082,41,0.1639,80,1],[79.5082,50,0.1639,100,4],[79.5082,41,0.1639,127,11],[79.5082,29,0.1639,127,8],[79.5409,39,0.0615,110,9],[79.6721,36,0.0615,100,9],[79.6721,29,0.1639,127,8],[79.6721,48,0.1639,100,4],[79.6721,41,0.1639,127,11],[79.6721,41,0.3279,127,1],[80.0,41,0.1639,127,11],[80.0,48,0.1639,100,4],[80.0,41,0.1639,80,1],[80.0,29,0.1639,127,8],[80.1639,39,0.0615,127,9],[80.1639,29,0.1639,127,8],[80.1639,50,0.1639,100,4],[80.1639,41,0.1639,127,11],[80.1639,41,0.3279,127,1],[80.1967,39,0.0615,127,9],[80.3278,43,0.1639,127,11],[80.3278,31,0.1639,127,8],[80.4918,36,0.0615,80,9],[80.4918,32,0.1639,127,8],[80.4918,41,0.1639,80,1],[80.4918,44,0.1639,127,11],[80.4918,50,0.1639,100,4],[80.6557,36,0.0615,100,9],[80.6557,56,0.1639,127,5],[80.6557,46,0.1639,127,11],[80.6557,67,0.1639,64,0],[80.6557,34,0.1639,127,8],[80.6557,68,0.1639,127,0],[80.6557,41,0.3279,127,1],[80.6557,65,0.9836,100,6],[80.6557,58,0.9836,100,7],[80.6557,53,3.9344,100,3],[80.6557,58,3.9344,100,3],[80.9836,46,0.1639,127,11],[80.9836,56,0.1639,127,5],[80.9836,53,0.1639,127,10],[80.9836,41,0.1639,80,1],[80.9836,34,0.1639,127,8],[80.9836,67,0.1639,64,0],[80.9836,68,0.1639,127,0],[81.1475,46,0.1639,127,11],[81.1475,55,0.1639,127,5],[81.1475,55,0.1639,127,10],[81.1475,67,0.1639,127,0],[81.1475,34,0.1639,127,8],[81.1475,66,0.1639,64,0],[81.1475,41,0.3279,127,1],[81.4754,36,0.0615,80,9],[81.4754,54,0.1639,127,5],[81.4754,53,0.1639,127,10],[81.4754,41,0.1639,80,1],[81.4754,65,0.1639,64,0],[81.4754,66,0.1639,127,0],[81.4754,34,0.1639,127,8],[81.4754,46,0.1639,127,11],[81.6393,36,0.0615,100,9],[81.6393,53,0.1639,127,10],[81.6393,53,0.1639,127,5],[81.6393,64,0.1639,64,0],[81.6393,34,0.1639,127,8],[81.6393,46,0.1639,127,11],[81.6393,65,0.1639,127,0],[81.6393,41,0.3279,127,1],[81.6393,60,0.9836,110,7],[81.6393,67,0.9836,110,6],[81.9672,46,0.1639,127,11],[81.9672,53,0.1639,127,5],[81.9672,53,0.1639,127,10],[81.9672,41,0.1639,80,1],[81.9672,34,0.1639,127,8],[81.9672,64,0.1639,64,0],[81.9672,65,0.1639,127,0],[82.1311,46,0.1639,127,11],[82.1311,51,0.1639,127,5],[82.1311,51,0.1639,127,10],[82.1311,63,0.1639,127,0],[82.1311,34,0.1639,127,8],[82.1311,62,0.1639,64,0],[82.1311,41,0.3279,127,1],[82.459,46,0.1639,127,11],[82.459,53,0.1639,127,5],[82.459,53,0.1639,127,10],[82.459,41,0.1639,80,1],[82.459,64,0.1639,64,0],[82.459,34,0.1639,127,8],[82.459,65,0.1639,127,0],[82.6229,36,0.0615,100,9],[82.6229,46,0.1639,127,11],[82.6229,34,0.1639,127,8],[82.6229,41,0.3279,127,1],[82.6229,61,0.9836,110,7],[82.6229,68,0.9836,110,6],[82.9508,46,0.1639,127,11],[82.9508,53,0.1639,127,5],[82.9508,53,0.1639,127,10],[82.9508,41,0.1639,80,1],[82.9508,34,0.1639,127,8],[82.9508,64,0.1639,64,0],[82.9508,65,0.1639,127,0],[83.1147,46,0.1639,127,11],[83.1147,51,0.1639,127,5],[83.1147,55,0.1639,127,10],[83.1147,63,0.1639,127,0],[83.1147,34,0.1639,127,8],[83.1147,62,0.1639,64,0],[83.1147,41,0.3279,127,1],[83.4426,36,0.0615,80,9],[83.4426,53,0.1639,127,10],[83.4426,53,0.1639,127,5],[83.4426,41,0.1639,80,1],[83.4426,64,0.1639,64,0],[83.4426,65,0.1639,127,0],[83.4426,34,0.1639,127,8],[83.4426,46,0.1639,127,11],[83.6065,36,0.0615,100,9],[83.6065,46,0.1639,127,11],[83.6065,63,0.1639,90,7],[83.6065,70,0.1639,90,6],[83.6065,34,0.1639,127,8],[83.6065,41,0.3279,127,1],[83.7704,65,0.1639,100,7],[83.7704,72,0.1639,100,6],[83.9344,46,0.1639,127,11],[83.9344,68,0.1639,100,7],[83.9344,64,0.1639,64,0],[83.9344,65,0.1639,127,0],[83.9344,53,0.1639,127,10],[83.9344,41,0.1639,80,1],[83.9344,75,0.1639,100,6],[83.9344,34,0.1639,127,8],[83.9344,53,0.1639,127,5],[84.0983,46,0.1639,127,11],[84.0983,70,0.1639,100,7],[84.0983,55,0.1639,127,10],[84.0983,77,0.1639,100,6],[84.0983,67,0.1639,64,0],[84.0983,68,0.1639,127,0],[84.0983,34,0.1639,127,8],[84.0983,56,0.1639,127,5],[84.0983,41,0.3279,127,1],[84.2622,44,0.1639,127,11],[84.2622,72,0.1639,110,7],[84.2622,80,0.1639,110,6],[84.2622,32,0.1639,127,8],[84.4262,36,0.0615,80,9],[84.4262,75,0.1639,120,7],[84.4262,64,0.1639,64,0],[84.4262,65,0.1639,127,0],[84.4262,41,0.1639,80,1],[84.4262,53,0.1639,127,5],[84.4262,31,0.1639,127,8],[84.4262,82,0.1639,120,6],[84.4262,43,0.1639,127,11],[84.4262,53,0.1639,127,10],[84.5901,36,0.0615,100,9],[84.5901,29,0.1639,127,8],[84.5901,41,0.1639,127,11],[84.5901,41,0.3279,127,1],[84.5901,53,3.9344,100,3],[84.5901,60,3.9344,100,3],[84.918,41,0.1639,127,11],[84.918,41,0.1639,80,1],[84.918,29,0.1639,127,8],[85.0819,39,0.0615,127,9],[85.0819,29,0.1639,127,8],[85.0819,41,0.1639,127,11],[85.0819,41,0.3279,127,1],[85.1147,39,0.0615,127,9],[85.4098,36,0.0615,80,9],[85.4098,39,0.0615,110,9],[85.4098,29,0.1639,127,8],[85.4098,41,0.1639,80,1],[85.4098,41,0.1639,127,11],[85.4426,39,0.0615,110,9],[85.5737,36,0.0615,100,9],[85.5737,29,0.1639,127,8],[85.5737,41,0.1639,127,11],[85.5737,41,0.3279,127,1],[85.9016,41,0.1639,127,11],[85.9016,41,0.1639,80,1],[85.9016,29,0.1639,127,8],[86.0655,39,0.0615,127,9],[86.0655,29,0.1639,127,8],[86.0655,41,0.1639,127,11],[86.0655,41,0.3279,127,1],[86.0983,39,0.0615,127,9],[86.3934,41,0.1639,127,11],[86.3934,41,0.1639,80,1],[86.3934,29,0.1639,127,8],[86.5573,36,0.0615,100,9],[86.5573,29,0.1639,127,8],[86.5573,41,0.1639,127,11],[86.5573,41,0.3279,127,1],[86.8852,41,0.1639,127,11],[86.8852,41,0.1639,80,1],[86.8852,29,0.1639,127,8],[87.0491,39,0.0615,127,9],[87.0491,29,0.1639,127,8],[87.0491,41,0.1639,127,11],[87.0491,41,0.3279,127,1],[87.0819,39,0.0615,127,9],[87.377,36,0.0615,80,9],[87.377,39,0.0615,110,9],[87.377,29,0.1639,127,8],[87.377,41,0.1639,80,1],[87.377,41,0.1639,127,11],[87.4098,39,0.0615,110,9],[87.5409,36,0.0615,100,9],[87.5409,29,0.1639,127,8],[87.5409,41,0.1639,127,11],[87.5409,41,0.3279,127,1],[87.8688,41,0.1639,127,11],[87.8688,41,0.1639,80,1],[87.8688,29,0.1639,127,8],[88.0327,39,0.0615,127,9],[88.0327,29,0.1639,127,8],[88.0327,41,0.1639,127,11],[88.0327,41,0.3279,127,1],[88.0655,39,0.0615,127,9],[88.1967,43,0.1639,127,11],[88.1967,31,0.1639,127,8],[88.3606,36,0.0615,80,9],[88.3606,41,0.1639,80,1],[88.3606,44,0.1639,127,11],[88.3606,32,0.1639,127,8],[88.5245,36,0.0615,100,9],[88.5245,56,0.1639,127,5],[88.5245,46,0.1639,127,11],[88.5245,68,0.1639,127,0],[88.5245,34,0.1639,127,8],[88.5245,67,0.1639,64,0],[88.5245,41,0.3279,127,1],[88.5245,65,0.9836,100,6],[88.5245,58,0.9836,100,7],[88.5245,53,3.9344,100,3],[88.5245,58,3.9344,100,3],[88.8524,46,0.1639,127,11],[88.8524,56,0.1639,127,5],[88.8524,53,0.1639,127,10],[88.8524,41,0.1639,80,1],[88.8524,34,0.1639,127,8],[88.8524,68,0.1639,127,0],[88.8524,67,0.1639,64,0],[89.0163,46,0.1639,127,11],[89.0163,55,0.1639,127,5],[89.0163,55,0.1639,127,10],[89.0163,66,0.1639,64,0],[89.0163,34,0.1639,127,8],[89.0163,67,0.1639,127,0],[89.0163,41,0.3279,127,1],[89.3442,36,0.0615,80,9],[89.3442,54,0.1639,127,5],[89.3442,53,0.1639,127,10],[89.3442,41,0.1639,80,1],[89.3442,66,0.1639,127,0],[89.3442,65,0.1639,64,0],[89.3442,34,0.1639,127,8],[89.3442,46,0.1639,127,11],[89.5081,36,0.0615,100,9],[89.5081,53,0.1639,127,10],[89.5081,53,0.1639,127,5],[89.5081,65,0.1639,127,0],[89.5081,34,0.1639,127,8],[89.5081,46,0.1639,127,11],[89.5081,64,0.1639,64,0],[89.5081,41,0.3279,127,1],[89.5081,60,0.9836,110,7],[89.5081,67,0.9836,110,6],[89.836,46,0.1639,127,11],[89.836,53,0.1639,127,5],[89.836,53,0.1639,127,10],[89.836,41,0.1639,80,1],[89.836,34,0.1639,127,8],[89.836,65,0.1639,127,0],[89.836,64,0.1639,64,0],[89.9999,46,0.1639,127,11],[89.9999,51,0.1639,127,5],[89.9999,51,0.1639,127,10],[89.9999,62,0.1639,64,0],[89.9999,34,0.1639,127,8],[89.9999,63,0.1639,127,0],[89.9999,41,0.3279,127,1],[90.3278,46,0.1639,127,11],[90.3278,53,0.1639,127,5],[90.3278,53,0.1639,127,10],[90.3278,41,0.1639,80,1],[90.3278,65,0.1639,127,0],[90.3278,34,0.1639,127,8],[90.3278,64,0.1639,64,0],[90.4918,36,0.0615,100,9],[90.4918,46,0.1639,127,11],[90.4918,34,0.1639,127,8],[90.4918,41,0.3279,127,1],[90.4918,61,0.9836,110,7],[90.4918,68,0.9836,110,6],[90.8196,46,0.1639,127,11],[90.8196,53,0.1639,127,5],[90.8196,53,0.1639,127,10],[90.8196,41,0.1639,80,1],[90.8196,34,0.1639,127,8],[90.8196,65,0.1639,127,0],[90.8196,64,0.1639,64,0],[90.9836,46,0.1639,127,11],[90.9836,51,0.1639,127,5],[90.9836,55,0.1639,127,10],[90.9836,62,0.1639,64,0],[90.9836,34,0.1639,127,8],[90.9836,63,0.1639,127,0],[90.9836,41,0.3279,127,1],[91.3114,36,0.0615,80,9],[91.3114,53,0.1639,127,10],[91.3114,53,0.1639,127,5],[91.3114,41,0.1639,80,1],[91.3114,65,0.1639,127,0],[91.3114,64,0.1639,64,0],[91.3114,34,0.1639,127,8],[91.3114,46,0.1639,127,11],[91.4754,36,0.0615,100,9],[91.4754,46,0.1639,127,11],[91.4754,63,0.1639,90,7],[91.4754,70,0.1639,90,6],[91.4754,34,0.1639,127,8],[91.4754,41,0.3279,127,1],[91.6393,65,0.1639,100,7],[91.6393,72,0.1639,100,6],[91.8032,46,0.1639,127,11],[91.8032,68,0.1639,100,7],[91.8032,65,0.1639,127,0],[91.8032,64,0.1639,64,0],[91.8032,53,0.1639,127,10],[91.8032,41,0.1639,80,1],[91.8032,75,0.1639,100,6],[91.8032,34,0.1639,127,8],[91.8032,53,0.1639,127,5],[91.9672,46,0.1639,127,11],[91.9672,70,0.1639,100,7],[91.9672,55,0.1639,127,10],[91.9672,77,0.1639,100,6],[91.9672,68,0.1639,127,0],[91.9672,67,0.1639,64,0],[91.9672,34,0.1639,127,8],[91.9672,56,0.1639,127,5],[91.9672,41,0.3279,127,1],[92.1311,44,0.1639,127,11],[92.1311,72,0.1639,110,7],[92.1311,80,0.1639,110,6],[92.1311,32,0.1639,127,8],[92.295,36,0.0615,80,9],[92.295,75,0.1639,120,7],[92.295,65,0.1639,127,0],[92.295,64,0.1639,64,0],[92.295,41,0.1639,80,1],[92.295,53,0.1639,127,5],[92.295,31,0.1639,127,8],[92.295,82,0.1639,120,6],[92.295,43,0.1639,127,11],[92.295,53,0.1639,127,10],[92.459,36,0.0615,100,9],[92.459,41,0.1639,127,11],[92.459,29,0.1639,127,8],[92.459,41,0.3279,127,1],[92.459,84,0.9836,127,6],[92.459,77,0.9836,127,7],[92.459,60,3.9344,100,3],[92.459,53,3.9344,100,3],[92.7868,41,0.1639,127,11],[92.7868,41,0.1639,80,1],[92.7868,29,0.1639,127,8],[92.9508,39,0.0615,127,9],[92.9508,41,0.1639,127,11],[92.9508,29,0.1639,127,8],[92.9508,41,0.3279,127,1],[92.9836,39,0.0615,127,9],[93.2786,36,0.0615,80,9],[93.2786,39,0.0615,110,9],[93.2786,41,0.1639,80,1],[93.2786,41,0.1639,127,11],[93.2786,29,0.1639,127,8],[93.3114,39,0.0615,110,9],[93.4426,36,0.0615,100,9],[93.4426,41,0.1639,127,11],[93.4426,29,0.1639,127,8],[93.4426,41,0.3279,127,1],[93.4426,82,0.4918,127,6],[93.4426,75,0.4918,127,7],[93.7704,41,0.1639,127,11],[93.7704,41,0.1639,80,1],[93.7704,29,0.1639,127,8],[93.9344,39,0.0615,127,9],[93.9344,41,0.1639,127,11],[93.9344,29,0.1639,127,8],[93.9344,41,0.3279,127,1],[93.9344,84,0.9836,127,6],[93.9344,77,0.9836,127,7],[93.9672,39,0.0615,127,9],[94.2622,41,0.1639,127,11],[94.2622,41,0.1639,80,1],[94.2622,29,0.1639,127,8],[94.4262,36,0.0615,100,9],[94.4262,41,0.1639,127,11],[94.4262,29,0.1639,127,8],[94.4262,41,0.3279,127,1],[94.754,41,0.1639,127,11],[94.754,41,0.1639,80,1],[94.754,29,0.1639,127,8],[94.918,39,0.0615,127,9],[94.918,41,0.1639,127,11],[94.918,29,0.1639,127,8],[94.918,41,0.3279,127,1],[94.918,80,0.4918,127,6],[94.918,73,0.4918,127,7],[94.9508,39,0.0615,127,9],[95.2458,36,0.0615,80,9],[95.2458,39,0.0615,110,9],[95.2458,41,0.1639,80,1],[95.2458,41,0.1639,127,11],[95.2458,29,0.1639,127,8],[95.2786,39,0.0615,110,9],[95.4098,36,0.0615,100,9],[95.4098,41,0.1639,127,11],[95.4098,29,0.1639,127,8],[95.4098,41,0.3279,127,1],[95.4098,82,0.4918,127,6],[95.4098,75,0.4918,127,7],[95.7377,41,0.1639,127,11],[95.7377,41,0.1639,80,1],[95.7377,29,0.1639,127,8],[95.9016,39,0.0615,127,9],[95.9016,41,0.1639,127,11],[95.9016,29,0.1639,127,8],[95.9016,41,0.3279,127,1],[95.9016,70,0.4918,127,7],[95.9016,77,0.4918,127,6],[95.9344,39,0.0615,127,9],[96.0655,43,0.1639,127,11],[96.0655,31,0.1639,127,8],[96.2295,36,0.0615,80,9],[96.2295,41,0.1639,80,1],[96.2295,34,0.1639,127,8],[96.2295,46,0.1639,127,11],[96.3934,36,0.0615,100,9],[96.3934,36,0.1639,127,8],[96.3934,48,0.1639,127,11],[96.3934,43,0.1639,100,4],[96.3934,53,0.1639,127,10],[96.3934,41,0.3279,127,1],[96.3934,79,0.9836,127,6],[96.3934,65,0.9836,127,7],[96.3934,72,0.9836,127,7],[96.3934,55,3.9344,100,3],[96.3934,60,3.9344,100,3],[96.7213,48,0.1639,127,11],[96.7213,53,0.1639,127,10],[96.7213,43,0.1639,100,4],[96.7213,36,0.1639,127,8],[96.7213,41,0.1639,80,1],[96.8852,48,0.1639,127,11],[96.8852,55,0.1639,127,10],[96.8852,45,0.1639,100,4],[96.8852,36,0.1639,127,8],[96.8852,41,0.3279,127,1],[97.2131,36,0.0615,80,9],[97.2131,36,0.1639,127,8],[97.2131,48,0.1639,127,11],[97.2131,45,0.1639,100,4],[97.2131,55,0.1639,127,10],[97.2131,41,0.1639,80,1],[97.377,36,0.0615,100,9],[97.377,36,0.1639,127,8],[97.377,48,0.1639,127,11],[97.377,43,0.1639,100,4],[97.377,53,0.1639,127,10],[97.377,41,0.3279,127,1],[97.377,77,0.4918,127,6],[97.377,63,0.4918,127,7],[97.377,70,0.4918,127,7],[97.7049,48,0.1639,127,11],[97.7049,53,0.1639,127,10],[97.7049,43,0.1639,100,4],[97.7049,36,0.1639,127,8],[97.7049,41,0.1639,80,1],[97.8688,48,0.1639,127,11],[97.8688,55,0.1639,127,10],[97.8688,45,0.1639,100,4],[97.8688,36,0.1639,127,8],[97.8688,41,0.3279,127,1],[97.8688,79,0.4918,127,6],[97.8688,65,0.4918,127,7],[97.8688,72,0.4918,127,7],[98.1967,48,0.1639,127,11],[98.1967,55,0.1639,127,10],[98.1967,45,0.1639,100,4],[98.1967,36,0.1639,127,8],[98.1967,41,0.1639,80,1],[98.3606,36,0.0615,100,9],[98.3606,36,0.1639,127,8],[98.3606,48,0.1639,127,11],[98.3606,43,0.1639,100,4],[98.3606,53,0.1639,127,10],[98.3606,41,0.3279,127,1],[98.3606,82,0.4918,127,6],[98.3606,68,0.4918,127,7],[98.3606,75,0.4918,127,7],[98.6885,48,0.1639,127,11],[98.6885,53,0.1639,127,10],[98.6885,43,0.1639,100,4],[98.6885,36,0.1639,127,8],[98.6885,41,0.1639,80,1],[98.8524,48,0.1639,127,11],[98.8524,55,0.1639,127,10],[98.8524,45,0.1639,100,4],[98.8524,36,0.1639,127,8],[98.8524,41,0.3279,127,1],[98.8524,84,0.9836,127,6],[98.8524,70,0.9836,127,7],[98.8524,77,0.9836,127,7],[99.1803,36,0.0615,80,9],[99.1803,36,0.1639,127,8],[99.1803,48,0.1639,127,11],[99.1803,45,0.1639,100,4],[99.1803,55,0.1639,127,10],[99.1803,41,0.1639,80,1],[99.3442,36,0.0615,100,9],[99.3442,36,0.1639,127,8],[99.3442,48,0.1639,127,11],[99.3442,43,0.1639,100,4],[99.3442,53,0.1639,127,10],[99.3442,41,0.3279,127,1],[99.6721,48,0.1639,127,11],[99.6721,53,0.1639,127,10],[99.6721,43,0.1639,100,4],[99.6721,36,0.1639,127,8],[99.6721,41,0.1639,80,1],[99.836,48,0.1639,127,11],[99.836,55,0.1639,127,10],[99.836,45,0.1639,100,4],[99.836,36,0.1639,127,8],[99.836,41,0.3279,127,1],[99.836,79,0.4918,127,6],[99.836,65,0.4918,127,7],[99.836,72,0.4918,127,7],[100.1639,36,0.0615,80,9],[100.1639,36,0.1639,127,8],[100.1639,55,0.1639,127,10],[100.1639,45,0.1639,100,4],[100.1639,41,0.1639,80,1],[100.1639,48,0.1639,127,11],[100.3278,36,0.0615,100,9],[100.3278,53,0.123,127,10],[100.3278,41,0.123,100,4],[100.3278,34,0.1639,127,8],[100.3278,46,0.1639,127,11],[100.8196,73,0.4918,127,7],[100.8196,66,0.4918,127,7],[100.8196,80,0.4918,127,6],[101.3114,72,0.4918,127,7],[101.3114,65,0.4918,127,7],[101.3114,79,0.4918,127,6],[101.8032,71,0.4918,127,7],[101.8032,64,0.4918,127,7],[101.8032,78,0.4918,127,6],[102.295,70,0.4918,127,7],[102.295,63,0.4918,127,7],[102.295,77,0.4918,127,6],[102.7868,69,0.4918,127,7],[102.7868,62,0.4918,127,7],[102.7868,76,0.4918,127,6],[103.2786,68,0.4918,127,7],[103.2786,61,0.4918,127,7],[103.2786,75,0.4918,127,6],[103.7704,67,0.4918,127,7],[103.7704,60,0.4918,127,7],[103.7704,74,0.4918,127,6],[104.2622,36,0.0615,100,9],[104.2622,29,0.1639,127,8],[104.2622,48,0.1639,100,4],[104.2622,41,0.1639,127,11],[104.2622,41,0.3279,127,1],[104.2622,53,5.9016,100,3],[104.2622,60,7.8688,100,3],[104.5901,41,0.1639,127,11],[104.5901,48,0.1639,100,4],[104.5901,41,0.1639,80,1],[104.5901,29,0.1639,127,8],[104.754,41,0.1639,127,11],[104.754,50,0.1639,100,4],[104.754,29,0.1639,127,8],[104.754,41,0.3279,127,1],[105.0819,36,0.0615,80,9],[105.0819,29,0.1639,127,8],[105.0819,50,0.1639,100,4],[105.0819,41,0.1639,80,1],[105.0819,41,0.1639,127,11],[105.2458,36,0.0615,100,9],[105.2458,29,0.1639,127,8],[105.2458,48,0.1639,100,4],[105.2458,41,0.1639,127,11],[105.2458,41,0.3279,127,1],[105.5737,41,0.1639,127,11],[105.5737,48,0.1639,100,4],[105.5737,41,0.1639,80,1],[105.5737,29,0.1639,127,8],[105.7376,41,0.1639,127,11],[105.7376,50,0.1639,100,4],[105.7376,29,0.1639,127,8],[105.7376,41,0.3279,127,1],[106.0655,41,0.1639,127,11],[106.0655,50,0.1639,100,4],[106.0655,41,0.1639,80,1],[106.0655,29,0.1639,127,8],[106.2294,36,0.0615,100,9],[106.2294,29,0.1639,127,8],[106.2294,48,0.1639,100,4],[106.2294,41,0.1639,127,11],[106.2294,41,0.3279,127,1],[106.5573,41,0.1639,127,11],[106.5573,48,0.1639,100,4],[106.5573,41,0.1639,80,1],[106.5573,29,0.1639,127,8],[106.7213,41,0.1639,127,11],[106.7213,50,0.1639,100,4],[106.7213,29,0.1639,127,8],[106.7213,41,0.3279,127,1],[107.0491,36,0.0615,80,9],[107.0491,29,0.1639,127,8],[107.0491,50,0.1639,100,4],[107.0491,41,0.1639,80,1],[107.0491,41,0.1639,127,11],[107.2131,36,0.0615,100,9],[107.2131,29,0.1639,127,8],[107.2131,48,0.1639,100,4],[107.2131,41,0.1639,127,11],[107.2131,41,0.3279,127,1],[107.5409,41,0.1639,127,11],[107.5409,48,0.1639,100,4],[107.5409,41,0.1639,80,1],[107.5409,29,0.1639,127,8],[107.7049,41,0.1639,127,11],[107.7049,50,0.1639,100,4],[107.7049,29,0.1639,127,8],[107.7049,41,0.3279,127,1],[108.0327,36,0.0615,80,9],[108.0327,29,0.1639,127,8],[108.0327,50,0.1639,100,4],[108.0327,41,0.1639,80,1],[108.0327,41,0.1639,127,11],[108.1967,36,0.0615,100,9],[108.1967,29,0.1639,127,8],[108.1967,48,0.1639,100,4],[108.1967,41,0.1639,127,11],[108.1967,41,0.3279,127,1],[108.5245,41,0.1639,127,11],[108.5245,48,0.1639,100,4],[108.5245,41,0.1639,80,1],[108.5245,29,0.1639,127,8],[108.6885,39,0.0615,127,9],[108.6885,29,0.1639,127,8],[108.6885,50,0.1639,100,4],[108.6885,41,0.1639,127,11],[108.6885,41,0.3279,127,1],[108.7212,39,0.0615,127,9],[109.0163,39,0.0615,110,9],[109.0163,36,0.0615,80,9],[109.0163,29,0.1639,127,8],[109.0163,41,0.1639,127,11],[109.0163,41,0.1639,80,1],[109.0163,50,0.1639,100,4],[109.0491,39,0.0615,110,9],[109.1803,36,0.0615,100,9],[109.1803,29,0.1639,127,8],[109.1803,48,0.1639,100,4],[109.1803,41,0.1639,127,11],[109.1803,41,0.3279,127,1],[109.5081,41,0.1639,127,11],[109.5081,48,0.1639,100,4],[109.5081,41,0.1639,80,1],[109.5081,29,0.1639,127,8],[109.6721,39,0.0615,127,9],[109.6721,29,0.1639,127,8],[109.6721,50,0.1639,100,4],[109.6721,41,0.1639,127,11],[109.6721,41,0.3279,127,1],[109.7049,39,0.0615,127,9],[109.9999,41,0.1639,127,11],[109.9999,41,0.1639,80,1],[109.9999,50,0.1639,100,4],[109.9999,29,0.1639,127,8],[110.1639,36,0.0615,100,9],[110.1639,24,0.1639,127,8],[110.1639,48,0.1639,100,4],[110.1639,36,0.1639,127,11],[110.1639,41,0.3279,127,1],[110.1639,55,1.9672,100,3],[110.4917,36,0.1639,127,11],[110.4917,48,0.1639,100,4],[110.4917,41,0.1639,80,1],[110.4917,24,0.1639,127,8],[110.6557,39,0.0615,127,9],[110.6557,26,0.1639,127,8],[110.6557,50,0.1639,100,4],[110.6557,38,0.1639,127,11],[110.6557,41,0.3279,127,1],[110.6885,39,0.0615,127,9],[110.9835,39,0.0615,110,9],[110.9835,36,0.0615,80,9],[110.9835,26,0.1639,127,8],[110.9835,38,0.1639,127,11],[110.9835,41,0.1639,80,1],[110.9835,50,0.1639,100,4],[111.0163,39,0.0615,110,9],[111.1475,36,0.0615,100,9],[111.1475,27,0.1639,127,8],[111.1475,48,0.1639,100,4],[111.1475,39,0.1639,127,11],[111.1475,41,0.3279,127,1],[111.4753,39,0.1639,127,11],[111.4753,48,0.1639,100,4],[111.4753,41,0.1639,80,1],[111.4753,27,0.1639,127,8],[111.6393,39,0.0615,127,9],[111.6393,28,0.1639,127,8],[111.6393,50,0.1639,100,4],[111.6393,40,0.1639,127,11],[111.6393,41,0.3279,127,1],[111.6721,39,0.0615,127,9],[111.9671,36,0.0615,80,9],[111.9671,28,0.1639,127,8],[111.9671,41,0.1639,80,1],[111.9671,40,0.1639,127,11],[111.9671,50,0.1639,100,4],[112.1311,36,0.0615,100,9],[112.1311,41,0.1639,127,11],[112.1311,53,0.1639,127,5],[112.1311,64,0.1639,64,0],[112.1311,65,0.1639,127,0],[112.1311,29,0.1639,127,8],[112.1311,48,0.1639,100,4],[112.1311,41,0.3279,127,1],[112.1311,53,15.7377,100,3],[112.1311,60,15.7377,100,3],[112.459,41,0.1639,127,11],[112.459,65,0.1639,127,0],[112.459,29,0.1639,127,8],[112.459,41,0.1639,80,1],[112.459,53,0.1639,127,5],[112.459,64,0.1639,64,0],[112.459,48,0.1639,100,4],[112.6229,41,0.1639,127,11],[112.6229,64,0.1639,64,0],[112.6229,29,0.1639,127,8],[112.6229,65,0.1639,127,0],[112.6229,53,0.1639,127,5],[112.6229,50,0.1639,100,4],[112.6229,41,0.3279,127,1],[112.9508,36,0.0615,80,9],[112.9508,64,0.1639,64,0],[112.9508,65,0.1639,127,0],[112.9508,41,0.1639,127,11],[112.9508,41,0.1639,80,1],[112.9508,53,0.1639,127,5],[112.9508,29,0.1639,127,8],[112.9508,50,0.1639,100,4],[113.1147,36,0.0615,100,9],[113.1147,41,0.1639,127,11],[113.1147,56,0.1639,127,5],[113.1147,67,0.1639,64,0],[113.1147,68,0.1639,127,0],[113.1147,29,0.1639,127,8],[113.1147,48,0.1639,100,4],[113.1147,41,0.3279,127,1],[113.4426,41,0.1639,127,11],[113.4426,65,0.1639,127,0],[113.4426,29,0.1639,127,8],[113.4426,41,0.1639,80,1],[113.4426,53,0.1639,127,5],[113.4426,64,0.1639,64,0],[113.4426,48,0.1639,100,4],[113.6065,41,0.1639,127,11],[113.6065,64,0.1639,64,0],[113.6065,29,0.1639,127,8],[113.6065,65,0.1639,127,0],[113.6065,53,0.1639,127,5],[113.6065,50,0.1639,100,4],[113.6065,41,0.3279,127,1],[113.9344,41,0.1639,127,11],[113.9344,65,0.1639,127,0],[113.9344,29,0.1639,127,8],[113.9344,41,0.1639,80,1],[113.9344,53,0.1639,127,5],[113.9344,64,0.1639,64,0],[113.9344,50,0.1639,100,4],[114.0983,36,0.0615,100,9],[114.0983,41,0.1639,127,11],[114.0983,58,0.1639,127,5],[114.0983,69,0.1639,64,0],[114.0983,70,0.1639,127,0],[114.0983,29,0.1639,127,8],[114.0983,48,0.1639,100,4],[114.0983,41,0.3279,127,1],[114.4262,41,0.1639,127,11],[114.4262,65,0.1639,127,0],[114.4262,29,0.1639,127,8],[114.4262,41,0.1639,80,1],[114.4262,53,0.1639,127,5],[114.4262,64,0.1639,64,0],[114.4262,48,0.1639,100,4],[114.5901,41,0.1639,127,11],[114.5901,64,0.1639,64,0],[114.5901,29,0.1639,127,8],[114.5901,65,0.1639,127,0],[114.5901,53,0.1639,127,5],[114.5901,50,0.1639,100,4],[114.5901,41,0.3279,127,1],[114.918,36,0.0615,80,9],[114.918,64,0.1639,64,0],[114.918,65,0.1639,127,0],[114.918,41,0.1639,127,11],[114.918,41,0.1639,80,1],[114.918,53,0.1639,127,5],[114.918,29,0.1639,127,8],[114.918,50,0.1639,100,4],[115.0819,36,0.0615,100,9],[115.0819,41,0.1639,127,11],[115.0819,56,0.1639,127,5],[115.0819,67,0.1639,64,0],[115.0819,68,0.1639,127,0],[115.0819,29,0.1639,127,8],[115.0819,48,0.1639,100,4],[115.0819,41,0.3279,127,1],[115.4098,41,0.1639,127,11],[115.4098,65,0.1639,127,0],[115.4098,29,0.1639,127,8],[115.4098,41,0.1639,80,1],[115.4098,53,0.1639,127,5],[115.4098,64,0.1639,64,0],[115.4098,48,0.1639,100,4],[115.5737,41,0.1639,127,11],[115.5737,62,0.1639,64,0],[115.5737,29,0.1639,127,8],[115.5737,63,0.1639,127,0],[115.5737,51,0.1639,127,5],[115.5737,50,0.1639,100,4],[115.5737,41,0.3279,127,1],[115.9016,36,0.0615,80,9],[115.9016,66,0.1639,64,0],[115.9016,67,0.1639,127,0],[115.9016,41,0.1639,127,11],[115.9016,41,0.1639,80,1],[115.9016,55,0.1639,127,5],[115.9016,29,0.1639,127,8],[115.9016,50,0.1639,100,4],[116.0655,36,0.0615,100,9],[116.0655,41,0.1639,127,11],[116.0655,53,0.1639,127,5],[116.0655,64,0.1639,64,0],[116.0655,65,0.1639,127,0],[116.0655,29,0.1639,127,8],[116.0655,48,0.1639,100,4],[116.0655,41,0.3279,127,1],[116.3934,41,0.1639,127,11],[116.3934,65,0.1639,127,0],[116.3934,29,0.1639,127,8],[116.3934,41,0.1639,80,1],[116.3934,53,0.1639,127,5],[116.3934,64,0.1639,64,0],[116.3934,48,0.1639,100,4],[116.5573,39,0.0615,127,9],[116.5573,29,0.1639,127,8],[116.5573,50,0.1639,100,4],[116.5573,41,0.1639,127,11],[116.5573,41,0.3279,127,1],[116.5901,39,0.0615,127,9],[116.8852,36,0.0615,80,9],[116.8852,39,0.0615,110,9],[116.8852,64,0.1639,64,0],[116.8852,53,0.1639,127,5],[116.8852,65,0.1639,127,0],[116.8852,41,0.1639,80,1],[116.8852,50,0.1639,100,4],[116.8852,41,0.1639,127,11],[116.8852,29,0.1639,127,8],[116.918,39,0.0615,110,9],[117.0491,36,0.0615,100,9],[117.0491,29,0.1639,127,8],[117.0491,48,0.1639,100,4],[117.0491,41,0.1639,127,11],[117.0491,41,0.3279,127,1],[117.377,41,0.1639,127,11],[117.377,48,0.1639,100,4],[117.377,41,0.1639,80,1],[117.377,29,0.1639,127,8],[117.5409,39,0.0615,127,9],[117.5409,29,0.1639,127,8],[117.5409,50,0.1639,100,4],[117.5409,41,0.1639,127,11],[117.5409,41,0.3279,127,1],[117.5737,39,0.0615,127,9],[117.8688,41,0.1639,127,11],[117.8688,50,0.1639,100,4],[117.8688,41,0.1639,80,1],[117.8688,29,0.1639,127,8],[118.0327,36,0.0615,100,9],[118.0327,41,0.1639,127,11],[118.0327,53,0.1639,127,5],[118.0327,64,0.1639,64,0],[118.0327,65,0.1639,127,0],[118.0327,29,0.1639,127,8],[118.0327,48,0.1639,100,4],[118.0327,41,0.3279,127,1],[118.3606,41,0.1639,127,11],[118.3606,48,0.1639,100,4],[118.3606,41,0.1639,80,1],[118.3606,29,0.1639,127,8],[118.5245,39,0.0615,127,9],[118.5245,29,0.1639,127,8],[118.5245,50,0.1639,100,4],[118.5245,41,0.1639,127,11],[118.5245,41,0.3279,127,1],[118.5573,39,0.0615,127,9],[118.8524,36,0.0615,80,9],[118.8524,39,0.0615,110,9],[118.8524,64,0.1639,64,0],[118.8524,53,0.1639,127,5],[118.8524,65,0.1639,127,0],[118.8524,41,0.1639,80,1],[118.8524,50,0.1639,100,4],[118.8524,41,0.1639,127,11],[118.8524,29,0.1639,127,8],[118.8852,39,0.0615,110,9],[119.0163,36,0.0615,100,9],[119.0163,29,0.1639,127,8],[119.0163,48,0.1639,100,4],[119.0163,41,0.1639,127,11],[119.0163,41,0.3279,127,1],[119.3442,41,0.1639,127,11],[119.3442,48,0.1639,100,4],[119.3442,41,0.1639,80,1],[119.3442,29,0.1639,127,8],[119.5081,39,0.0615,127,9],[119.5081,24,0.1639,127,8],[119.5081,50,0.1639,100,4],[119.5081,36,0.1639,127,11],[119.5081,41,0.3279,127,1],[119.5409,39,0.0615,127,9],[119.6721,38,0.1639,127,11],[119.6721,26,0.1639,127,8],[119.836,36,0.0615,80,9],[119.836,27,0.1639,127,8],[119.836,50,0.1639,100,4],[119.836,41,0.1639,80,1],[119.836,39,0.1639,127,11],[119.9999,36,0.0615,100,9],[119.9999,41,0.1639,127,11],[119.9999,53,0.1639,127,5],[119.9999,65,0.1639,127,0],[119.9999,64,0.1639,64,0],[119.9999,29,0.1639,127,8],[119.9999,48,0.1639,100,4],[119.9999,41,0.3279,127,1],[120.3278,41,0.1639,127,11],[120.3278,64,0.1639,64,0],[120.3278,29,0.1639,127,8],[120.3278,41,0.1639,80,1],[120.3278,53,0.1639,127,5],[120.3278,65,0.1639,127,0],[120.3278,48,0.1639,100,4],[120.4917,41,0.1639,127,11],[120.4917,65,0.1639,127,0],[120.4917,29,0.1639,127,8],[120.4917,64,0.1639,64,0],[120.4917,53,0.1639,127,5],[120.4917,50,0.1639,100,4],[120.4917,41,0.3279,127,1],[120.8196,36,0.0615,80,9],[120.8196,65,0.1639,127,0],[120.8196,64,0.1639,64,0],[120.8196,41,0.1639,127,11],[120.8196,41,0.1639,80,1],[120.8196,53,0.1639,127,5],[120.8196,29,0.1639,127,8],[120.8196,50,0.1639,100,4],[120.9835,36,0.0615,100,9],[120.9835,41,0.1639,127,11],[120.9835,56,0.1639,127,5],[120.9835,68,0.1639,127,0],[120.9835,67,0.1639,64,0],[120.9835,29,0.1639,127,8],[120.9835,48,0.1639,100,4],[120.9835,41,0.3279,127,1],[121.3114,41,0.1639,127,11],[121.3114,64,0.1639,64,0],[121.3114,29,0.1639,127,8],[121.3114,41,0.1639,80,1],[121.3114,53,0.1639,127,5],[121.3114,65,0.1639,127,0],[121.3114,48,0.1639,100,4],[121.4753,41,0.1639,127,11],[121.4753,65,0.1639,127,0],[121.4753,29,0.1639,127,8],[121.4753,64,0.1639,64,0],[121.4753,53,0.1639,127,5],[121.4753,50,0.1639,100,4],[121.4753,41,0.3279,127,1],[121.8032,41,0.1639,127,11],[121.8032,64,0.1639,64,0],[121.8032,29,0.1639,127,8],[121.8032,41,0.1639,80,1],[121.8032,53,0.1639,127,5],[121.8032,65,0.1639,127,0],[121.8032,50,0.1639,100,4],[121.9671,36,0.0615,100,9],[121.9671,41,0.1639,127,11],[121.9671,58,0.1639,127,5],[121.9671,70,0.1639,127,0],[121.9671,69,0.1639,64,0],[121.9671,29,0.1639,127,8],[121.9671,48,0.1639,100,4],[121.9671,41,0.3279,127,1],[122.295,41,0.1639,127,11],[122.295,64,0.1639,64,0],[122.295,29,0.1639,127,8],[122.295,41,0.1639,80,1],[122.295,53,0.1639,127,5],[122.295,65,0.1639,127,0],[122.295,48,0.1639,100,4],[122.4589,41,0.1639,127,11],[122.4589,65,0.1639,127,0],[122.4589,29,0.1639,127,8],[122.4589,64,0.1639,64,0],[122.4589,53,0.1639,127,5],[122.4589,50,0.1639,100,4],[122.4589,41,0.3279,127,1],[122.7868,36,0.0615,80,9],[122.7868,65,0.1639,127,0],[122.7868,64,0.1639,64,0],[122.7868,41,0.1639,127,11],[122.7868,41,0.1639,80,1],[122.7868,53,0.1639,127,5],[122.7868,29,0.1639,127,8],[122.7868,50,0.1639,100,4],[122.9507,36,0.0615,100,9],[122.9507,41,0.1639,127,11],[122.9507,56,0.1639,127,5],[122.9507,68,0.1639,127,0],[122.9507,67,0.1639,64,0],[122.9507,29,0.1639,127,8],[122.9507,48,0.1639,100,4],[122.9507,41,0.3279,127,1],[123.2786,41,0.1639,127,11],[123.2786,64,0.1639,64,0],[123.2786,29,0.1639,127,8],[123.2786,41,0.1639,80,1],[123.2786,53,0.1639,127,5],[123.2786,65,0.1639,127,0],[123.2786,48,0.1639,100,4],[123.4426,41,0.1639,127,11],[123.4426,63,0.1639,127,0],[123.4426,29,0.1639,127,8],[123.4426,62,0.1639,64,0],[123.4426,51,0.1639,127,5],[123.4426,50,0.1639,100,4],[123.4426,41,0.3279,127,1],[123.7704,36,0.0615,80,9],[123.7704,67,0.1639,127,0],[123.7704,66,0.1639,64,0],[123.7704,41,0.1639,127,11],[123.7704,41,0.1639,80,1],[123.7704,55,0.1639,127,5],[123.7704,29,0.1639,127,8],[123.7704,50,0.1639,100,4],[123.9344,36,0.0615,100,9],[123.9344,41,0.1639,127,11],[123.9344,53,0.1639,127,5],[123.9344,65,0.1639,127,0],[123.9344,64,0.1639,64,0],[123.9344,29,0.1639,127,8],[123.9344,48,0.1639,100,4],[123.9344,41,0.3279,127,1],[124.2622,41,0.1639,127,11],[124.2622,64,0.1639,64,0],[124.2622,29,0.1639,127,8],[124.2622,41,0.1639,80,1],[124.2622,53,0.1639,127,5],[124.2622,65,0.1639,127,0],[124.2622,48,0.1639,100,4],[124.4262,39,0.0615,127,9],[124.4262,29,0.1639,127,8],[124.4262,50,0.1639,100,4],[124.4262,41,0.1639,127,11],[124.4262,41,0.3279,127,1],[124.4589,39,0.0615,127,9],[124.754,36,0.0615,80,9],[124.754,39,0.0615,110,9],[124.754,65,0.1639,127,0],[124.754,53,0.1639,127,5],[124.754,64,0.1639,64,0],[124.754,41,0.1639,80,1],[124.754,50,0.1639,100,4],[124.754,41,0.1639,127,11],[124.754,29,0.1639,127,8],[124.7868,39,0.0615,110,9],[124.918,36,0.0615,100,9],[124.918,29,0.1639,127,8],[124.918,48,0.1639,100,4],[124.918,41,0.1639,127,11],[124.918,41,0.3279,127,1],[125.2458,41,0.1639,127,11],[125.2458,48,0.1639,100,4],[125.2458,41,0.1639,80,1],[125.2458,29,0.1639,127,8],[125.4098,39,0.0615,127,9],[125.4098,29,0.1639,127,8],[125.4098,50,0.1639,100,4],[125.4098,41,0.1639,127,11],[125.4098,41,0.3279,127,1],[125.4426,39,0.0615,127,9],[125.7376,41,0.1639,127,11],[125.7376,50,0.1639,100,4],[125.7376,41,0.1639,80,1],[125.7376,29,0.1639,127,8],[125.9016,36,0.0615,100,9],[125.9016,41,0.1639,127,11],[125.9016,53,0.1639,127,5],[125.9016,65,0.1639,127,0],[125.9016,64,0.1639,64,0],[125.9016,29,0.1639,127,8],[125.9016,48,0.1639,100,4],[125.9016,41,0.3279,127,1],[126.2294,41,0.1639,127,11],[126.2294,48,0.1639,100,4],[126.2294,41,0.1639,80,1],[126.2294,29,0.1639,127,8],[126.3934,39,0.0615,127,9],[126.3934,29,0.1639,127,8],[126.3934,50,0.1639,100,4],[126.3934,41,0.1639,127,11],[126.3934,41,0.3279,127,1],[126.4262,39,0.0615,127,9],[126.7212,36,0.0615,80,9],[126.7212,39,0.0615,110,9],[126.7212,65,0.1639,127,0],[126.7212,53,0.1639,127,5],[126.7212,64,0.1639,64,0],[126.7212,41,0.1639,80,1],[126.7212,50,0.1639,100,4],[126.7212,41,0.1639,127,11],[126.7212,29,0.1639,127,8],[126.754,39,0.0615,110,9],[126.8852,36,0.0615,100,9],[126.8852,29,0.1639,127,8],[126.8852,48,0.1639,100,4],[126.8852,41,0.1639,127,11],[126.8852,41,0.3279,127,1],[127.213,41,0.1639,127,11],[127.213,48,0.1639,100,4],[127.213,41,0.1639,80,1],[127.213,29,0.1639,127,8],[127.377,39,0.0615,127,9],[127.377,29,0.1639,127,8],[127.377,50,0.1639,100,4],[127.377,41,0.1639,127,11],[127.377,41,0.3279,127,1],[127.4098,39,0.0615,127,9],[127.5409,43,0.1639,127,11],[127.5409,31,0.1639,127,8],[127.7048,36,0.0615,80,9],[127.7048,32,0.1639,127,8],[127.7048,41,0.1639,80,1],[127.7048,44,0.1639,127,11],[127.7048,50,0.1639,100,4]];
+const MIDI_DURATION=127.8688;
+let midiStartTime=0,midiEventIndex=0,midiLoopTimer=null,midiVoices=[];
+
+function setMusicLabel(){
+  document.querySelectorAll('#musicToggle,#musicToggleStart').forEach(
+    b=>b.textContent=musicOn?'🔊 Music: On':'🔇 Music: Off'
+  )
+}
+function hz(n){return 440*Math.pow(2,(n-69)/12)}
+function midiWave(ch){
+  if(ch===9)return 'square';
+  if(ch===0||ch===1||ch===2)return 'triangle';
+  if(ch===3||ch===4||ch===5)return 'square';
+  return 'sine';
+}
+function midiTone(note,t,dur,vel,ch){
+  if(!musicCtx||!musicOn)return;
+  const o=musicCtx.createOscillator(),g=musicCtx.createGain();
+  o.type=midiWave(ch); o.frequency.value=hz(note);
+  const level=Math.max(.006,Math.min(.045,(vel/127)*.038));
+  g.gain.setValueAtTime(level,t);
+  g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.03,dur));
+  o.connect(g).connect(musicCtx.destination);
+  o.start(t); o.stop(t+Math.max(.03,dur)+.03);
+  midiVoices.push(o);
+}
+function scheduleMidiChunk(){
+  if(!musicOn||!musicCtx)return;
+  const elapsed=musicCtx.currentTime-midiStartTime;
+  const horizon=elapsed+1.2;
+  while(midiEventIndex<MIDI_EVENTS.length && MIDI_EVENTS[midiEventIndex][0]<=horizon){
+    const e=MIDI_EVENTS[midiEventIndex++];
+    const when=midiStartTime+e[0];
+    if(when>=musicCtx.currentTime-.05)midiTone(e[1],when,e[2],e[3],e[4]);
+  }
+  if(elapsed>=MIDI_DURATION){
+    midiStartTime=musicCtx.currentTime+.08;
+    midiEventIndex=0;
+  }
+  midiLoopTimer=setTimeout(scheduleMidiChunk,250);
+}
+function unlockAudio(){
+  if(!musicOn)return;
+  if(!musicCtx)musicCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(musicCtx.state==='suspended')musicCtx.resume();
+}
+function startMusic(){
+  if(!musicOn)return;
+  unlockAudio();
+  if(!midiLoopTimer){
+    midiStartTime=musicCtx.currentTime+.08;
+    midiEventIndex=0;
+    scheduleMidiChunk();
+  }
+}
+function stopMusic(){
+  if(midiLoopTimer){clearTimeout(midiLoopTimer);midiLoopTimer=null}
+  midiVoices.forEach(o=>{try{o.stop()}catch(e){}});
+  midiVoices=[];
+}
+
+const VICTORY_MIDI_EVENTS=[[0.0,70,0.0531,110,0],[0.0,46,0.0531,110,2],[0.0563,72,0.0531,110,0],[0.0563,48,0.0531,110,2],[0.1125,74,0.0531,110,0],[0.1125,50,0.0531,110,2],[0.1687,75,0.0531,110,0],[0.1687,51,0.0531,110,2],[0.225,77,0.0531,110,0],[0.225,53,0.0531,110,2],[0.2812,79,0.0531,110,0],[0.2812,55,0.0531,110,2],[0.3375,81,0.0531,110,0],[0.3375,57,0.0531,110,2],[0.3937,82,0.0531,110,0],[0.3937,58,0.0531,110,2],[0.45,84,0.1469,110,0],[0.45,60,0.1469,110,2],[0.6,84,0.1469,110,0],[0.6,60,0.1469,110,2],[0.75,84,0.1469,110,0],[0.75,60,0.1469,110,2],[0.9,84,0.4,110,0],[0.9,60,0.4,110,2],[1.35,80,0.4,110,0],[1.35,63,0.4,110,2],[1.8,82,0.4,110,0],[1.8,62,0.4,110,2],[2.25,84,0.25,110,0],[2.25,60,0.25,110,2],[2.55,82,0.1469,110,0],[2.55,58,0.1469,110,2],[2.7,84,1.125,110,0],[2.7,60,1.125,110,2],[3.9,48,0.2219,110,2],[3.9,79,0.4,110,0],[4.125,60,0.2219,110,2],[4.35,48,0.2219,110,2],[4.35,77,0.4,110,0],[4.575,60,0.2219,110,2],[4.8,48,0.2219,110,2],[4.8,79,0.4,110,0],[5.025,60,0.2219,110,2],[5.25,77,0.2219,110,0],[5.25,48,0.2219,110,2],[5.475,82,0.4,110,0],[5.475,51,0.4,110,2],[5.925,82,0.2219,110,0],[5.925,63,0.2219,110,2],[6.15,51,0.2219,110,2],[6.15,81,0.4,110,0],[6.375,63,0.2219,110,2],[6.6,82,0.2219,110,0],[6.6,51,0.2219,110,2],[6.825,63,0.2219,110,2],[6.825,81,0.4,110,0],[7.05,51,0.2219,110,2],[7.275,81,0.2219,110,0],[7.275,63,0.2219,110,2],[7.5,48,0.2219,110,2],[7.5,79,0.4,110,0],[7.725,60,0.2219,110,2],[7.95,48,0.2219,110,2],[7.95,77,0.4,110,0],[8.175,60,0.2219,110,2],[8.4,48,0.2219,110,2],[8.4,76,0.4,110,0],[8.625,60,0.2219,110,2],[8.85,77,0.2219,110,0],[8.85,48,0.2219,110,2],[9.075,46,0.4,110,2],[9.075,74,2.0219,110,0],[9.525,58,0.2219,110,2],[9.75,48,0.2219,110,2],[9.975,60,0.2219,110,2],[10.2,50,0.2219,110,2],[10.425,62,0.2219,110,2],[10.65,46,0.2219,110,2],[10.875,58,0.2219,110,2],[11.1,48,0.2219,110,2],[11.1,79,0.4,110,0],[11.325,60,0.2219,110,2],[11.55,48,0.2219,110,2],[11.55,77,0.4,110,0],[11.775,60,0.2219,110,2],[12.0,48,0.2219,110,2],[12.0,79,0.4,110,0],[12.225,60,0.2219,110,2],[12.45,77,0.2219,110,0],[12.45,48,0.2219,110,2],[12.675,82,0.4,110,0],[12.675,51,0.4,110,2],[13.125,82,0.2219,110,0],[13.125,63,0.2219,110,2],[13.35,51,0.2219,110,2],[13.35,81,0.4,110,0],[13.575,63,0.2219,110,2],[13.8,82,0.2219,110,0],[13.8,51,0.2219,110,2],[14.025,63,0.2219,110,2],[14.025,81,0.4,110,0],[14.25,51,0.2219,110,2],[14.475,81,0.2219,110,0],[14.475,63,0.2219,110,2],[14.7,48,0.2219,110,2],[14.7,79,0.4,110,0],[14.925,60,0.2219,110,2],[15.15,48,0.2219,110,2],[15.15,77,0.4,110,0],[15.375,60,0.2219,110,2],[15.6,48,0.2219,110,2],[15.6,79,0.4,110,0],[15.825,60,0.2219,110,2],[16.05,82,0.2219,110,0],[16.05,46,0.2219,110,2],[16.275,44,0.4,110,2],[16.275,84,2.0219,110,0],[16.725,56,0.2219,110,2],[16.95,46,0.2219,110,2],[17.175,58,0.2219,110,2],[17.4,48,0.2219,110,2],[17.625,60,0.2219,110,2],[17.85,44,0.2219,110,2],[18.075,56,0.2219,110,2],[18.3,48,0.2219,110,2],[18.3,79,0.4,110,0],[18.525,60,0.2219,110,2],[18.75,48,0.2219,110,2],[18.75,77,0.4,110,0],[18.975,60,0.2219,110,2],[19.2,48,0.2219,110,2],[19.2,79,0.4,110,0],[19.425,60,0.2219,110,2],[19.65,77,0.2219,110,0],[19.65,48,0.2219,110,2],[19.875,82,0.4,110,0],[19.875,51,0.4,110,2],[20.325,82,0.2219,110,0],[20.325,63,0.2219,110,2],[20.55,51,0.2219,110,2],[20.55,81,0.4,110,0],[20.775,63,0.2219,110,2],[21.0,82,0.2219,110,0],[21.0,51,0.2219,110,2],[21.225,63,0.2219,110,2],[21.225,81,0.4,110,0],[21.45,51,0.2219,110,2],[21.675,81,0.2219,110,0],[21.675,63,0.2219,110,2],[21.9,48,0.2219,110,2],[21.9,79,0.4,110,0],[22.125,60,0.2219,110,2],[22.35,48,0.2219,110,2],[22.35,77,0.4,110,0],[22.575,60,0.2219,110,2],[22.8,48,0.2219,110,2],[22.8,76,0.4,110,0],[23.025,60,0.2219,110,2],[23.25,77,0.2219,110,0],[23.25,48,0.2219,110,2],[23.475,46,0.4,110,2],[23.475,74,2.0219,110,0],[23.925,58,0.2219,110,2],[24.15,48,0.2219,110,2],[24.375,60,0.2219,110,2],[24.6,50,0.2219,110,2],[24.825,62,0.2219,110,2],[25.05,46,0.2219,110,2],[25.275,58,0.2219,110,2],[25.5,48,0.2219,110,2],[25.5,79,0.4,110,0],[25.725,60,0.2219,110,2],[25.95,48,0.2219,110,2],[25.95,77,0.4,110,0],[26.175,60,0.2219,110,2],[26.4,48,0.2219,110,2],[26.4,79,0.4,110,0],[26.625,60,0.2219,110,2],[26.85,77,0.2219,110,0],[26.85,48,0.2219,110,2],[27.075,82,0.4,110,0],[27.075,51,0.4,110,2],[27.525,82,0.2219,110,0],[27.525,63,0.2219,110,2],[27.75,51,0.2219,110,2],[27.75,81,0.4,110,0],[27.975,63,0.2219,110,2],[28.2,82,0.2219,110,0],[28.2,51,0.2219,110,2],[28.425,63,0.2219,110,2],[28.425,81,0.4,110,0],[28.65,51,0.2219,110,2],[28.875,81,0.2219,110,0],[28.875,63,0.2219,110,2],[29.1,48,0.2219,110,2],[29.1,79,0.4,110,0],[29.325,60,0.2219,110,2],[29.55,48,0.2219,110,2],[29.55,77,0.4,110,0],[29.775,60,0.2219,110,2],[30.0,48,0.2219,110,2],[30.0,79,0.4,110,0],[30.225,60,0.2219,110,2],[30.45,82,0.2219,110,0],[30.45,46,0.2219,110,2],[30.675,44,0.4,110,2],[30.675,84,2.0219,110,0],[31.125,56,0.2219,110,2],[31.35,46,0.2219,110,2],[31.575,58,0.2219,110,2],[31.8,48,0.2219,110,2],[32.025,60,0.2219,110,2],[32.25,44,0.2219,110,2],[32.475,56,0.2219,110,2],[32.7,48,0.2219,110,2],[32.7,79,0.4,110,0],[32.925,60,0.2219,110,2],[33.15,48,0.2219,110,2],[33.15,77,0.4,110,0],[33.375,60,0.2219,110,2],[33.6,48,0.2219,110,2],[33.6,79,0.4,110,0],[33.825,60,0.2219,110,2],[34.05,77,0.2219,110,0],[34.05,48,0.2219,110,2],[34.275,82,0.4,110,0],[34.275,51,0.4,110,2],[34.725,82,0.2219,110,0],[34.725,63,0.2219,110,2],[34.95,51,0.2219,110,2],[34.95,81,0.4,110,0],[35.175,63,0.2219,110,2],[35.4,82,0.2219,110,0],[35.4,51,0.2219,110,2],[35.625,63,0.2219,110,2],[35.625,81,0.4,110,0],[35.85,51,0.2219,110,2],[36.075,81,0.2219,110,0],[36.075,63,0.2219,110,2]];
+const VICTORY_MIDI_DURATION=36.2969;
+let endCueOscillators=[];
+function stopEndCue(){
+  endCueOscillators.forEach(o=>{try{o.stop()}catch(e){}});
+  endCueOscillators=[];
+}
+function playVictoryMidi(){
+  if(!musicOn)return;
+  if(!musicCtx)musicCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(musicCtx.state==='suspended')musicCtx.resume();
+  const base=musicCtx.currentTime+.06;
+  VICTORY_MIDI_EVENTS.forEach(e=>{
+    const [off,n,dur,vel,ch]=e;
+    const o=musicCtx.createOscillator(),g=musicCtx.createGain();
+    o.type=midiWave(ch);o.frequency.value=hz(n);
+    const level=Math.max(.008,Math.min(.055,(vel/127)*.046));
+    g.gain.setValueAtTime(.0001,base+off);
+    g.gain.exponentialRampToValueAtTime(level,base+off+.008);
+    g.gain.exponentialRampToValueAtTime(.0001,base+off+Math.max(.03,dur));
+    o.connect(g).connect(musicCtx.destination);
+    endCueOscillators.push(o);
+    o.onended=()=>{endCueOscillators=endCueOscillators.filter(x=>x!==o)};
+    o.start(base+off);o.stop(base+off+Math.max(.03,dur)+.04);
+  });
+}
+
+
+const GAMEOVER_MIDI_EVENTS=[[2.9239,86,0.3766,115,3],[2.9239,86,0.7532,110,4],[2.9239,88,0.7532,105,4],[2.9239,79,0.7532,95,4],[3.3086,84,0.3766,109,3],[3.6932,79,0.3766,112,2],[3.6932,84,0.7532,100,3],[3.6932,76,0.7532,105,4],[3.6932,79,0.7532,100,4],[4.0778,76,0.3766,95,2],[4.4624,74,0.3766,111,3],[4.4624,79,0.7532,105,4],[4.4624,76,0.7532,100,4],[4.847,72,0.3766,110,3],[5.2316,67,0.4137,112,2],[5.2316,72,0.8275,100,3],[5.2316,72,0.8275,105,4],[5.6542,64,0.4137,105,2],[6.0767,62,0.7532,106,2],[6.0767,74,1.508,94,3],[6.0767,69,1.508,94,3],[6.0767,65,1.508,105,4],[6.0767,62,1.508,95,4],[6.0767,57,1.508,85,4],[6.8459,64,0.3766,108,2],[7.2306,65,0.3766,111,2],[7.6152,64,0.7532,106,2],[7.6152,52,0.7532,85,4],[7.6152,67,1.508,94,3],[7.6152,72,1.508,94,3],[7.6152,64,1.508,105,4],[7.6152,67,1.508,105,4],[7.6152,60,1.508,95,4],[8.3844,65,0.3766,107,2],[8.3844,48,0.7532,85,4],[8.769,67,0.3766,110,2],[9.1536,69,0.7532,106,2],[9.1536,72,0.7532,106,2],[9.1536,60,0.7532,108,3],[9.1536,53,1.508,85,4],[9.1536,60,1.508,95,4],[9.1536,65,1.508,105,4],[9.9229,70,0.3766,110,2],[9.9229,74,0.3766,110,2],[9.9229,62,0.3766,103,3],[10.3075,69,0.3766,100,2],[10.3075,72,0.3766,100,2],[10.3075,60,0.3766,93,3],[10.6921,67,1.508,106,2],[10.6921,72,1.508,106,2],[10.6921,60,1.508,105,3],[10.6921,52,1.508,85,4],[10.6921,60,1.508,95,4],[10.6921,64,1.508,105,4],[12.2305,74,0.7532,109,2],[12.2305,69,0.7532,109,2],[12.2305,62,0.7532,103,3],[12.2305,53,1.508,95,4],[12.2305,65,1.508,115,4],[12.2305,50,1.508,105,4],[12.2305,46,1.508,85,4],[12.9998,67,0.3766,108,2],[12.9998,70,0.7532,108,2],[12.9998,58,0.7532,96,3],[13.3844,65,0.3766,104,2],[13.769,76,0.7532,108,2],[13.769,64,0.7532,108,2],[13.769,64,0.7532,101,3],[13.769,67,1.508,115,4],[13.769,55,1.508,95,4],[13.769,48,1.508,85,4],[13.769,52,1.508,95,4],[14.5382,60,0.7532,101,2],[14.5382,72,0.7532,101,2],[14.5382,60,0.7532,95,3],[14.9229,58,0.3766,105,4],[15.3075,72,0.3766,88,2],[15.3075,60,0.3766,88,2],[15.3075,55,3.0465,85,4],[15.6921,74,0.3766,96,2],[15.6921,62,0.3766,96,2],[15.6921,62,2.6619,95,4],[16.0767,74,1.1314,92,2],[16.0767,62,1.1458,92,2],[16.0767,67,2.2612,100,4],[17.2305,79,0.3766,92,2],[17.2305,67,0.3766,92,2],[17.6152,83,0.3766,100,2],[17.6152,71,0.3766,100,2],[17.9998,84,0.3766,105,2],[17.9998,72,0.3766,105,2],[18.3844,53,0.4808,95,4],[18.3844,70,0.7532,107,2],[18.3844,84,0.7532,118,2],[18.3844,72,0.7532,124,2],[18.3844,77,0.7532,107,2],[18.3844,74,0.7532,119,3],[18.3844,65,1.508,107,2],[18.769,46,1.1378,85,4],[19.1536,76,0.3766,122,3],[19.1536,70,0.7532,106,2],[19.1536,82,0.7532,106,2],[19.1536,53,0.7532,95,4],[19.5382,77,0.3766,127,3],[19.9228,79,0.7532,96,2],[19.9228,64,0.7532,96,2],[19.9228,72,0.7532,96,2],[19.9228,76,0.7532,124,3],[19.9228,48,1.1314,85,4],[19.9228,67,1.508,96,2],[20.3075,55,0.3766,95,4],[20.6921,60,0.7532,103,2],[20.6921,72,0.7532,122,3],[20.6921,60,0.7612,100,4],[21.0767,48,0.3766,85,4],[21.4613,68,0.3766,98,2],[21.4613,77,0.7532,126,3],[21.4613,61,1.508,98,2],[21.4613,49,1.508,85,4],[21.8459,68,0.3766,103,2],[21.8459,56,0.3766,95,4],[22.2305,79,0.3766,122,3],[22.2305,73,0.7532,95,2],[22.2305,61,0.7532,100,4],[22.6152,80,0.3766,126,3],[22.9998,79,0.7532,123,3],[22.9998,51,1.1314,85,4],[22.9998,67,1.508,102,2],[22.9998,63,1.508,102,2],[23.3844,70,0.3766,107,2],[23.3844,58,0.3766,95,4],[23.769,63,0.3766,100,4],[23.769,75,0.7532,96,2],[23.769,75,0.7532,119,3],[24.1536,51,0.3766,95,4],[24.5382,64,0.7532,99,2],[24.5382,71,0.7532,99,2],[24.5382,80,0.7532,124,3],[24.5382,59,0.7532,95,4],[24.5382,52,0.7532,85,4],[24.5382,64,0.7532,105,4],[25.3075,78,0.3766,121,3],[25.3075,61,0.7532,102,2],[25.3075,71,0.7532,102,2],[25.3075,59,0.7532,95,4],[25.3075,52,0.7532,85,4],[25.3075,56,0.7532,105,4],[25.6921,76,0.3766,115,3],[26.0767,66,0.7532,100,2],[26.0767,71,0.7532,100,2],[26.0767,75,0.7532,121,3],[26.0767,66,0.7532,105,4],[26.0767,63,0.7532,100,4],[26.0767,56,0.7532,85,4],[26.8459,63,0.7532,101,2],[26.8459,69,0.7532,101,2],[26.8459,71,0.7532,112,3],[26.8459,54,0.7532,85,4],[26.8459,59,0.7532,95,4],[26.8459,63,0.7532,105,4],[27.6151,71,0.3766,119,3],[27.6151,49,1.508,85,4],[27.9998,73,0.3766,120,3],[27.9998,56,0.3766,95,4],[28.3844,61,0.7532,100,4],[28.3844,73,2.7088,120,3],[29.1536,37,1.9604,85,4]];
+const GAMEOVER_MIDI_DURATION=31.1140;
+function playGameOverMidi(){
+  if(!musicOn)return;
+  if(!musicCtx)musicCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(musicCtx.state==='suspended')musicCtx.resume();
+  const base=musicCtx.currentTime+.06;
+  GAMEOVER_MIDI_EVENTS.forEach(e=>{
+    const [off,n,dur,vel,ch]=e;
+    const o=musicCtx.createOscillator(),g=musicCtx.createGain();
+    o.type=midiWave(ch);o.frequency.value=hz(n);
+    const level=Math.max(.008,Math.min(.055,(vel/127)*.046));
+    g.gain.setValueAtTime(.0001,base+off);
+    g.gain.exponentialRampToValueAtTime(level,base+off+.008);
+    g.gain.exponentialRampToValueAtTime(.0001,base+off+Math.max(.03,dur));
+    o.connect(g).connect(musicCtx.destination);
+    endCueOscillators.push(o);
+    o.onended=()=>{endCueOscillators=endCueOscillators.filter(x=>x!==o)};
+    o.start(base+off);o.stop(base+off+Math.max(.03,dur)+.04);
+  });
+}
+
+function fanfare(kind){if(kind==='win'){playVictoryMidi();return;}if(kind==='lose'){playGameOverMidi();return;}
+  if(!musicOn||!musicCtx)return;
+  stopMusic();
+  const now=musicCtx.currentTime+.06, beat=60/132;
+  const seq=kind==='win'
+    ? [[0,.38,72],[.42,.38,76],[.84,.38,79],[1.26,.55,84],[1.92,.32,79],[2.28,.32,81],[2.64,.85,84]]
+    : [[0,.46,72],[.54,.46,71],[1.08,.54,69],[1.75,.62,67],[2.5,1.05,64]];
+  seq.forEach(([b,d,p])=>tone(hz(p),now+b*beat,d*beat,'square',kind==='win'?.032:.024));
+}
+function toggleMusic(){musicOn=!musicOn;setMusicLabel();if(musicOn){unlockAudio();startMusic()}else stopMusic()}
+document.querySelectorAll('#musicToggle,#musicToggleStart').forEach(b=>b.addEventListener('click',toggleMusic));
+setMusicLabel();
+const exitConfirm=document.querySelector('#exitConfirm'),exitConfirmTitle=document.querySelector('#exitConfirmTitle'),exitConfirmMessage=document.querySelector('#exitConfirmMessage');
+let exitConfirmAction=null;
+function setTournamentControls(){const n=document.querySelector('#new');if(n)n.classList.toggle('tournament-locked',!!(tournamentRef||tournamentGameContext))}
+function showExitConfirm(kind,action){exitConfirmAction=action;if(kind==='tournament'){exitConfirmTitle.textContent='FORFEIT TOURNAMENT?';exitConfirmMessage.textContent='Leaving now will forfeit your current tournament match. Do you want to forfeit?'}else if(kind==='newgame'){exitConfirmTitle.textContent='START A NEW GAME?';exitConfirmMessage.textContent='This will end the current game and start a new one.'}else{exitConfirmTitle.textContent='ARE YOU SURE?';exitConfirmMessage.textContent='Exiting now will end the game.'}exitConfirm.classList.add('show')}
+function hideExitConfirm(){exitConfirm.classList.remove('show');exitConfirmAction=null}
+function goHomeScreen(){stopMusic();stopEndCue();selected=null;busy=true;if(mpRef)mpRef.off();mpRef=null;mpRoom=null;mpSeat=null;gameMode='computer';setModeBadge();startScreen.classList.remove('hidden');closeModePanels();document.querySelector('#mpPanel').hidden=true;document.querySelector('#tourneyPanel').hidden=true;setTournamentControls();requestAnimationFrame(()=>{startScreen.scrollTop=0;window.scrollTo(0,0)})}
+async function forfeitTournamentMatch(){const ctx=tournamentGameContext;if(!ctx||!tournamentRef)returnToTournamentLobby();else{const winner=tournamentColor===ctx.a?ctx.b:ctx.a;const path=ctx.round==='final'?'bracket/final':'bracket/round1/'+ctx.index;try{await tournamentRef.child(path).child('winner').transaction(cur=>cur||winner);await advanceTournamentAfterResult()}catch(e){tournamentError(e.message||String(e))}returnToTournamentLobby()}setTournamentControls()}
+async function leavePvpForHome(){try{if(mpRef){await mpRef.child('game/finished').set(true);mpRef.off()}}catch(e){}goHomeScreen()}
+function homeRequested(){if(tournamentGameContext){showExitConfirm('tournament',forfeitTournamentMatch);return}if(isMp()&&mpRef){showExitConfirm('pvp',leavePvpForHome);return}if(tournamentRef){showExitConfirm('tournament',async()=>{goHomeScreen()});return}showExitConfirm('computer',goHomeScreen)}
+document.querySelector('#homeBtn').addEventListener('click',homeRequested);
+document.querySelector('#exitConfirmNo').addEventListener('click',hideExitConfirm);
+document.querySelector('#exitConfirmYes').addEventListener('click',async()=>{const a=exitConfirmAction;hideExitConfirm();if(a)await a()});
+const startScreen=document.querySelector('#startScreen');
+function enterComputer(){unlockAudio();gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;setModeBadge();startScreen.classList.add('hidden');startMusic();reset()}
+async function createClassmateRoom(){unlockAudio();try{mpError('');await initFirebase();gameMode='classmate';mpSeat=0;for(let tries=0;tries<8;tries++){const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),snap=await lobby.once('value');if(snap.exists())continue;const ref=mpDb.ref('rooms/'+code);mpRoom=code;mpRef=ref;setModeBadge();const fb=Array(9).fill(null),fh=dealHands();await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,game:{board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false}});await lobby.set(mpUid);ref.child('p1Online').onDisconnect().set(false);document.querySelector('#createdRoom').hidden=false;document.querySelector('#joinRoom').hidden=true;document.querySelector('#roomCode').textContent=code;listenRoom();return}throw new Error("Couldn't create a room. Try again.")}catch(e){gameMode='computer';mpError(e.message);setModeBadge()}}
+async function joinClassmateRoom(){unlockAudio();try{mpError('');await initFirebase();const code=(document.querySelector('#joinCode').value||'').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,4);if(code.length!==4)throw new Error('Enter the 4-character game code.');const lobbySnap=await mpDb.ref('lobbies/'+code).once('value');if(!lobbySnap.exists())throw new Error("I couldn't find that game.");const ref=mpDb.ref('rooms/'+code);gameMode='classmate';mpRoom=code;mpSeat=1;mpRef=ref;setModeBadge();const claim=await ref.child('p2').transaction(current=>{if(current===null)return mpUid;if(current===mpUid)return current;return});if(!claim.committed||claim.snapshot.val()!==mpUid)throw new Error('That game already has two players.');await ref.child('p2Online').set(true);ref.child('p2Online').onDisconnect().set(false);listenRoom()}catch(e){gameMode='computer';mpError(e.message);setModeBadge()}}
+function listenRoom(){if(!mpRef)return;mpRef.on('value',snap=>{const room=snap.val();if(!room){mpError('That room no longer exists.');return}if(mpSeat===0&&!room.p2){document.querySelector('#roomWait').textContent='Waiting for your classmate…';return}if(room.game){const old=board?clone(board):Array(9).fill(null),s=stateFromWire(room.game);board=s.board;hands=s.hands;turn=s.turn;busy=false;selected=null;endSoundPlayed=false;startScreen.classList.add('hidden');setModeBadge();startMusic();const changed=[];board.forEach((c,i)=>{if(c&&old[i]&&c.owner!==old[i].owner)changed.push(i)});const placed=board.findIndex((c,i)=>c&&!old[i]);const mpClashes=placed>=0?clashesForPlacement(placed,board[placed],old):[];render();if(mpClashes.length)queueRhythmClashes(mpClashes);if(changed.length)queueCaptureFX(changed)}})}
+document.querySelector('#vsComputer').addEventListener('click',enterComputer);
+document.querySelector('#vsClassmate').addEventListener('click',()=>{unlockAudio();closeModePanels('mpPanel');document.querySelector('#mpPanel').hidden=false;mpError('')});
+document.querySelector('#viewFinalBracket').addEventListener('click',()=>{hideChampionSplash();returnToTournamentLobby()});
+document.querySelector('#tournamentMode').addEventListener('click',()=>{unlockAudio();setTournamentControls();closeModePanels('tourneyPanel');document.querySelector('#tourneyPanel').hidden=false;tournamentError('')});
+document.querySelector('#createTournament').addEventListener('click',createTournamentLobby);
+document.querySelector('#showTournamentJoin').addEventListener('click',()=>{document.querySelector('#createdTournament').hidden=true;document.querySelector('#studentTournamentStatus').hidden=true;document.querySelector('#joinTournament').hidden=false;tournamentError('')});
+document.querySelector('#joinTournamentNow').addEventListener('click',joinTournamentLobby);
+document.querySelector('#startTournament').addEventListener('click',startTournamentBracket);
+document.querySelector('#playTournamentMatch').addEventListener('click',playTournamentMatch);
+document.querySelector('#createRoom').addEventListener('click',createClassmateRoom);
+document.querySelector('#showJoin').addEventListener('click',()=>{document.querySelector('#createdRoom').hidden=true;document.querySelector('#joinRoom').hidden=false;mpError('')});
+document.querySelector('#joinNow').addEventListener('click',joinClassmateRoom);
+document.querySelector('#joinCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinClassmateRoom()});
+starter=0;reset();busy=true;render();setModeBadge();
+</script>
+
+<style id="tutorial-mode-style">
+.tutorial-btn{min-width:190px}
+#tutorialDialogue{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9000;width:min(760px,94vw);background:linear-gradient(#fff8df,#ead9ad);border:5px double #6f542d;border-radius:10px;box-shadow:0 12px 35px #0008;padding:16px 18px;font-family:Georgia,"Times New Roman",serif;color:#2d241b}
+#tutorialDialogue[hidden]{display:none}.tutorial-kicker{font-size:12px;font-weight:900;letter-spacing:.16em;color:#795d29}.tutorial-heading{font-size:clamp(22px,5vw,32px);font-weight:900;margin:3px 0 7px}.tutorial-copy{font-size:clamp(16px,3.6vw,20px);line-height:1.38}.tutorial-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.tutorial-next{font-weight:900;min-width:110px}.tutorial-arrow{display:inline-block;margin-left:6px;animation:tutArrow .65s infinite alternate}@keyframes tutArrow{to{transform:translateY(3px)}}
+body.tutorial-active .controls label,body.tutorial-active #new{display:none!important}body.tutorial-active .modebadge{font-weight:900}
+body.tutorial-active .slot.tutorial-target{position:relative;z-index:20;box-shadow:0 0 0 4px #ffe36e,0 0 22px 8px #f2b632!important;animation:tutGlow .8s infinite alternate}body.tutorial-active .hand .pick.tutorial-target{position:relative;z-index:20;box-shadow:0 0 0 4px #ffe36e,0 0 20px 7px #f2b632!important;animation:tutGlow .8s infinite alternate}
+body.tutorial-active .slot:disabled:not(.tutorial-target),body.tutorial-active .hand .pick:disabled:not(.tutorial-target){filter:brightness(.65);opacity:.68}@keyframes tutGlow{to{filter:brightness(1.18);transform:scale(1.025)}}
+#tutorialToast{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:#101426ee;color:#ffe47d;text-align:center;font-family:Georgia,serif;font-weight:900;font-size:clamp(34px,9vw,70px);letter-spacing:.06em;padding:24px}#tutorialToast.show{display:flex}
+</style>
+<div id="tutorialDialogue" hidden role="dialog" aria-live="polite"><div class="tutorial-kicker" id="tutorialKicker">MUSIC TRIAD TUTORIAL</div><div class="tutorial-heading" id="tutorialHeading">WELCOME!</div><div class="tutorial-copy" id="tutorialCopy"></div><div class="tutorial-actions"><button class="tutorial-next" id="tutorialNext" type="button">NEXT <span class="tutorial-arrow">▼</span></button></div></div>
+<div id="tutorialToast">🏆<br>TUTORIAL COMPLETE!</div>
+<script id="scripted-tutorial">
+(()=>{
+ const modeChoices=document.querySelector('.modechoices');
+ const tb=document.createElement('button');tb.className='modebtn tutorial-btn';tb.id='tutorialMode';tb.type='button';tb.textContent='🎓 TUTORIAL';modeChoices.appendChild(tb);
+ let tutorialActive=false,tutorialLesson=-1,tutorialTargetCard=0,tutorialTargetSquare=4,tutorialAwaiting=false;
+ const originalRender=render,originalHumanPlace=humanPlace;
+ const C=(owner,t,r,b,l)=>({owner,e:[t,r,b,l]});
+ const lessons=[
+  {heading:'PLACING A CARD',copy:'Choose the glowing card. Then place it in the glowing square. Every card has a musical symbol on each of its four sides.',board:Array(9).fill(null),hand:[C(0,'qn','en','hn','sn')],square:4,after:'Great! The card you play is the ATTACKER. Only a newly played card attacks.'},
+  {heading:'BEAT VALUES',copy:'Longer beat values defeat shorter beat values. Your WHOLE NOTE is 4 beats. The opponent’s HALF NOTE is 2 beats. Place your card beside it and watch the clash.',board:[null,null,null,null,null,C(1,'qn','qn','qn','hn'),null,null,null],hand:[C(0,'qn','wn','qn','qn')],square:4,after:'WHOLE NOTE: 4 beats. HALF NOTE: 2 beats. 4 > 2, so the whole note captures!'},
+  {heading:'NOTES AND RESTS',copy:'Notes battle notes. Rests battle rests. A note and a rest do NOT capture each other, even when one has a longer beat value.',board:[null,C(1,'wr','wr','wr','wr'),null,null,null,null,null,null,null],hand:[C(0,'qn','qn','wn','qn')],square:4,after:'No capture! The touching sides are a NOTE and a REST, so their beat values are not compared.'},
+  {heading:'TIES',copy:'Equal beat values tie. A QUARTER NOTE, TWO EIGHTH NOTES, and FOUR SIXTEENTH NOTES are all 1 beat.',board:[null,null,null,C(1,'qn','qn','qn','ee'),null,null,null,null,null],hand:[C(0,'qn','qn','qn','qn')],square:4,after:'1 beat = 1 beat. A tie means NO CAPTURE.'},
+  {heading:'FERMATA',copy:'A Fermata is legendary. When its Fermata side attacks, it automatically captures — no beat comparison needed.',board:[null,C(1,'wn','wn','wn','wn'),null,null,null,null,null,null,null],hand:[C(0,'f','qn','qn','qn')],square:4,after:'FERMATA wins automatically! When defending, its Fermata side cannot be captured either.'},
+  {heading:'CONDUCTOR',copy:'The Conductor is the grand finale. When played, it captures EVERY adjacent opponent card at once. Put it in the center.',board:[null,C(1,'qn','qn','qn','qn'),null,C(1,'qn','qn','qn','qn'),null,C(1,'qn','qn','qn','qn'),null,C(1,'qn','qn','qn','qn'),null],hand:[{owner:0,cond:true,e:[]}],square:4,after:'Every adjacent opponent followed the Conductor! One placement can capture them all.'}
+ ];
+ function showDialogue(heading,copy,button='NEXT'){
+   document.querySelector('#tutorialHeading').textContent=heading;document.querySelector('#tutorialCopy').innerHTML=copy;document.querySelector('#tutorialNext').firstChild.nodeValue=button+' ';document.querySelector('#tutorialDialogue').hidden=false;
+ }
+ function hideDialogue(){document.querySelector('#tutorialDialogue').hidden=true}
+ function setupLesson(n){
+   tutorialLesson=n;const L=lessons[n];board=clone(L.board);hands=[clone(L.hand),[]];turn=0;busy=false;selected=null;tutorialTargetCard=0;tutorialTargetSquare=L.square;tutorialAwaiting=false;originalRender();decorateTutorial();showDialogue(L.heading,L.copy,'TRY IT');
+ }
+ function decorateTutorial(){if(!tutorialActive)return;document.querySelector('#modeBadge').textContent='🎓 GUIDED TUTORIAL';document.querySelector('#score').textContent=`Lesson ${tutorialLesson+1} of ${lessons.length}`;const picks=[...document.querySelectorAll('#hand .pick')],slots=[...document.querySelectorAll('#board .slot')];picks.forEach((x,i)=>{const ok=i===tutorialTargetCard;x.disabled=!ok;x.classList.toggle('tutorial-target',ok)});slots.forEach((x,i)=>{const ok=i===tutorialTargetSquare&&!board[i];x.disabled=!ok;x.classList.toggle('tutorial-target',ok)});document.querySelector('#status').textContent=selected===null?'Select the glowing card.':'Place it in the glowing square.'}
+ render=function(){originalRender();decorateTutorial()};
+ humanPlace=async function(i){
+   if(!tutorialActive)return originalHumanPlace(i);if(i!==tutorialTargetSquare||selected!==tutorialTargetCard)return;
+   const L=lessons[tutorialLesson],c=hands[0].splice(selected,1)[0];selected=null;apply(i,c);busy=true;originalRender();await waitForClashes();await new Promise(r=>setTimeout(r,450));busy=false;tutorialAwaiting=true;showDialogue('NICE!',L.after,tutorialLesson===lessons.length-1?'FINISH':'NEXT');
+ };
+ function startTutorial(){unlockAudio();tutorialActive=true;gameMode='computer';mpRoom=null;mpSeat=null;tournamentGameContext=null;document.body.classList.add('tutorial-active');startScreen.classList.add('hidden');startMusic();showDialogue('WELCOME TO MUSIC TRIAD!','You’ll learn by playing a short, scripted game. I’ll explain one rule, then you’ll perform it on the board.<br><br><b>The glowing card and square show you what to try.</b>','BEGIN');tutorialLesson=-1;tutorialAwaiting=false}
+ function finishTutorial(){hideDialogue();const toast=document.querySelector('#tutorialToast');toast.classList.add('show');setTimeout(()=>{toast.classList.remove('show');tutorialActive=false;document.body.classList.remove('tutorial-active');goHomeScreen()},2200)}
+ document.querySelector('#tutorialNext').addEventListener('click',()=>{
+   if(tutorialLesson<0){hideDialogue();setupLesson(0);return}
+   if(!tutorialAwaiting){hideDialogue();decorateTutorial();return}
+   if(tutorialLesson===lessons.length-1){finishTutorial();return}
+   hideDialogue();setupLesson(tutorialLesson+1)
+ });
+ tb.addEventListener('click',startTutorial);
+ const oldHome=homeRequested;homeRequested=function(){if(tutorialActive){showExitConfirm('computer',()=>{tutorialActive=false;document.body.classList.remove('tutorial-active');hideDialogue();goHomeScreen()});return}oldHome()};
+})();
+</script>
+
+</body></html>

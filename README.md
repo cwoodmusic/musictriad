@@ -39,3 +39,7 @@ python3 tests/animation-audio-browser.py
 ## Publishing
 
 GitHub Pages serves the `main` branch at `https://cwoodmusic.github.io/musictriad/`. Publish `index.html` and its companion JavaScript files together so the cabinet loads the same version of the game, result bridge, and audio controller.
+
+## Classroom privacy
+
+Launch with `?classroom=1` (or embed in Coda with classroom privacy on) to use private parent-profile progress only. Firebase SDKs are not loaded and classmate/tournament services are unavailable in this mode. Same-origin classroom frames inherit their parent's scoped progress store before the game reads local progress. Single-player Simple and Advanced games, tied-board continuation, audio, and the arcade result bridge remain available. Standalone play without the flag retains its existing online features.

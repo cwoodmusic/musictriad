@@ -145,7 +145,7 @@ class TriadBrowserCase(unittest.TestCase):
         frame.wait_for_function('''()=>{
           const state=window.MusicTriadAnimationQA?.state();
           return state&&!state.pending&&!state.clashes&&!state.captures&&endSoundPlayed;
-        }''', timeout=15000)
+        }''', timeout=30000)
 
     def totals(self):
         return self.page.evaluate('''()=>({notes:CodaArcadeQA.notes().balance,

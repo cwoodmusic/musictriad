@@ -37,11 +37,58 @@ class AnimationAudioTests(TriadBrowserCase):
         self.start(self.page.main_frame, advanced=advanced, difficulty='Hard')
         return self.page.main_frame
 
-    def test_svg_capture_comparison_stays_quick_and_end_cue_waits_for_final_board_on_desktop_and_phone(self):
+    def observe_comparisons(self, frame):
+        frame.evaluate("""()=>{
+          window.__comparisonWindows=[];
+          new MutationObserver(records=>{
+            for(const record of records){
+              for(const node of record.addedNodes)if(node.matches?.('.notation-clash-layer'))
+                __comparisonWindows.push({node,opened:performance.now(),closed:null});
+              for(const node of record.removedNodes){const item=__comparisonWindows.find(i=>i.node===node);
+                if(item)item.closed=performance.now();}
+            }
+          }).observe(document.body,{childList:true});
+        }""")
+
+    def test_comparison_has_a_static_read_then_clash_then_result_before_capture(self):
+        frame = self.load_game()
+        position = self.position(frame)
+        # One real neighboring opponent keeps this a single visible comparison.
+        frame.evaluate("""()=>{
+          for(let i=0;i<board.length;i++)if(board[i])board[i].owner=i===5?1:0;
+          codaTriadReset();render();
+        }""")
+        self.last_move(frame, position)
+        overlay = frame.locator('.notation-clash-layer')
+        overlay.wait_for(state='visible')
+        self.assertEqual(overlay.get_attribute('data-phase'), 'reading')
+        self.assertEqual(overlay.locator('.clash-facing-edge svg').count(), 2)
+        self.assertIn('WHOLE NOTE', overlay.locator('.triad-clash-math').inner_text())
+        self.assertIn('SIXTEENTH NOTE', overlay.locator('.triad-clash-math').inner_text())
+        starting = overlay.locator('.triad-clash-card').evaluate_all(
+            "nodes=>nodes.map(n=>({transform:getComputedStyle(n).transform,opacity:getComputedStyle(n).opacity}))")
+        frame.wait_for_timeout(1450)
+        self.assertEqual(overlay.get_attribute('data-phase'), 'reading')
+        self.assertEqual(overlay.locator('.triad-clash-card').evaluate_all(
+            "nodes=>nodes.map(n=>({transform:getComputedStyle(n).transform,opacity:getComputedStyle(n).opacity}))"), starting)
+        self.assertEqual(frame.locator('.capture-flash').count(), 0)
+        self.assertEqual(frame.evaluate('window.__cues'), [])
+        overlay.wait_for(state='visible')
+        frame.wait_for_function("document.querySelector('.notation-clash-layer')?.dataset.phase==='clashing'")
+        frame.wait_for_function("document.querySelector('.notation-clash-layer')?.dataset.phase==='result'")
+        self.assertEqual(overlay.locator('.has-lost').count(), 1)
+        frame.wait_for_timeout(500)
+        self.assertEqual(overlay.get_attribute('data-phase'), 'result')
+        self.assertEqual(frame.evaluate('window.__cues'), [])
+        self.settle(frame)
+        self.assertIn('You win', frame.locator('#status').inner_text())
+
+    def test_svg_comparisons_allow_reading_time_and_end_cue_waits_for_final_board_on_desktop_and_phone(self):
         for phone, advanced in [(False,False),(True,False),(False,True),(True,True)]:
             with self.subTest(phone=phone,advanced=advanced):
                 frame = self.load_game(advanced=advanced, phone=phone)
                 position = self.position(frame)
+                self.observe_comparisons(frame)
                 self.last_move(frame, position)
                 frame.locator('.notation-clash-layer').wait_for(state='visible')
                 self.assertGreaterEqual(frame.locator('.notation-clash-layer svg').count(), 2)
@@ -61,7 +108,87 @@ class AnimationAudioTests(TriadBrowserCase):
                 self.assertFalse(cues[0]['animation']['pending'])
                 self.assertFalse(cues[0]['animation']['clashes'])
                 self.assertFalse(cues[0]['animation']['captures'])
-                self.assertLess(cues[0]['time'] - frame.evaluate('window.__lastMoveStarted'), 3000)
+                elapsed = cues[0]['time'] - frame.evaluate('window.__lastMoveStarted')
+                self.assertGreaterEqual(elapsed, 10000, 'All four comparisons retain at least 2.5 seconds of reading time')
+                self.assertLess(elapsed, 30000)
+                comparisons = frame.evaluate('window.__comparisonWindows.map(({opened,closed})=>({opened,closed}))')
+                self.assertEqual(len(comparisons), 4)
+                for index, comparison in enumerate(comparisons):
+                    self.assertIsNotNone(comparison['closed'])
+                    self.assertGreaterEqual(comparison['closed']-comparison['opened'], 3500,
+                                            'Later comparisons keep the full lesson pace')
+                    if index:self.assertGreaterEqual(comparison['opened'],comparisons[index-1]['closed']-30)
+                self.assertGreaterEqual(cues[0]['time'], comparisons[-1]['closed']-30)
+
+    def test_advanced_computer_reveal_does_not_flash_captures_before_reading(self):
+        frame = self.load_game(advanced=True)
+        self.position(frame)
+        frame.evaluate("""()=>{
+          for(let i=0;i<board.length;i++)if(board[i]){
+            board[i].owner=[1,4,6,9].includes(i)?0:1;board[i].e=Array(4).fill('sn');
+          }
+          hands[1]=[{owner:1,e:Array(4).fill('wn'),meter:'4/4'}];
+          turn=1;busy=false;codaTriadReset();render();
+          window.__cpuReports=[];const report=CodaBridge.report;
+          CodaBridge.report=(id,result)=>{__cpuReports.push({id,result,time:performance.now()});return report(id,result)};
+          window.__captureFlashes=[];
+          new MutationObserver(records=>{
+            for(const item of records)if(item.target.matches?.('.slot.capture-flash'))
+              __captureFlashes.push(performance.now());
+          }).observe(document.querySelector('#board'),{attributes:true,attributeFilter:['class'],subtree:true});
+        }""")
+        self.observe_comparisons(frame)
+        frame.evaluate("()=>{window.__lastMoveStarted=performance.now();cpuMove();return true}")
+        frame.wait_for_timeout(40)
+        self.assertEqual(frame.evaluate('window.__captureFlashes'), [], 'The 80ms computer reveal cannot start a board flip')
+        overlay = frame.locator('.notation-clash-layer')
+        overlay.wait_for(state='visible')
+        self.assertEqual(overlay.get_attribute('data-phase'), 'reading')
+        frame.wait_for_timeout(1400)
+        self.assertEqual(overlay.get_attribute('data-phase'), 'reading')
+        self.assertEqual(frame.evaluate('window.__captureFlashes'), [])
+        self.assertEqual(frame.evaluate('window.__cpuReports'), [])
+        self.assertEqual(frame.evaluate('window.__cues'), [])
+        self.settle(frame)
+        comparisons = frame.evaluate('window.__comparisonWindows.map(({opened,closed})=>({opened,closed}))')
+        self.assertEqual(len(comparisons), 4)
+        flashes = frame.evaluate('window.__captureFlashes')
+        self.assertTrue(flashes)
+        self.assertGreaterEqual(min(flashes),comparisons[-1]['closed']-30)
+        self.assertEqual(frame.locator('#board .card.cpu').count(),16)
+        self.assertEqual([cue['kind'] for cue in frame.evaluate('window.__cues')],['lose'])
+        reports = frame.evaluate('window.__cpuReports')
+        self.assertEqual(len(reports),1)
+        self.assertFalse(reports[0]['result']['won'])
+        self.assertGreaterEqual(reports[0]['time'],comparisons[-1]['closed']-30)
+
+    def test_advanced_special_cards_explain_their_rule_before_capture(self):
+        for special, defender, expected in [('qfermata','qn','attacker'),('qfermata','qr','defender'),
+                                             ('mmrest','qr','attacker'),('mmrest','qn','defender')]:
+            with self.subTest(special=special,defender=defender):
+                frame = self.load_game(advanced=True)
+                position = self.position(frame)
+                frame.evaluate("""({special,defender})=>{
+                  for(let i=0;i<board.length;i++)if(board[i]){
+                    board[i].owner=i===6?1:0;board[i].e=Array(4).fill(defender);
+                  }
+                  hands[0][0]={owner:0,special,e:[]};codaTriadReset();render();
+                }""", {'special':special,'defender':defender})
+                self.last_move(frame, position)
+                overlay = frame.locator('.notation-clash-layer')
+                overlay.wait_for(state='visible')
+                self.assertEqual(overlay.get_attribute('data-phase'),'reading')
+                self.assertIn('special card rule',overlay.locator('.triad-clash-cue').inner_text())
+                self.assertIn('captures notes' if special=='qfermata' else 'captures rests',
+                              overlay.locator('.triad-clash-math').inner_text())
+                self.assertEqual(overlay.get_attribute('data-result'),expected)
+                frame.wait_for_function("document.querySelector('.notation-clash-layer')?.dataset.phase==='result'")
+                self.assertIn('special card',overlay.locator('.triad-clash-cue').inner_text())
+                self.assertNotIn('longer beat',overlay.locator('.triad-clash-cue').inner_text())
+                self.assertEqual(overlay.locator('.triad-clash-result').inner_text(),
+                                 'CAPTURE!' if expected=='attacker' else 'DEFENDER HOLDS')
+                self.settle(frame)
+                self.assertEqual(frame.locator('#board .card.you').count(),16 if expected=='attacker' else 15)
 
     def test_full_cards_keep_board_directions_and_facing_notes_for_capture_hold_and_tie(self):
         for direction, winner in [(-3,'attacker'),(1,'defender'),(3,'tie'),(-1,'attacker')]:
@@ -95,16 +222,57 @@ class AnimationAudioTests(TriadBrowserCase):
                 self.assertEqual(overlay.locator('.has-lost').count(), 0 if winner=='tie' else 1)
                 self.settle(frame)
 
+    def test_reading_and_outcome_fit_phone_portrait_landscape_and_desktop(self):
+        for viewport in [{'width':1440,'height':1000},{'width':390,'height':844},{'width':844,'height':390}]:
+            with self.subTest(viewport=viewport):
+                frame = self.load_game(phone=viewport['width']<1000)
+                self.page.set_viewport_size(viewport)
+                position = self.position(frame)
+                frame.evaluate("""()=>{
+                  for(let i=0;i<board.length;i++)if(board[i])board[i].owner=i===1?1:0;
+                  codaTriadReset();render();
+                }""")
+                self.last_move(frame, position)
+                overlay = frame.locator('.notation-clash-layer')
+                overlay.wait_for(state='visible')
+                panel = overlay.locator('.triad-clash-panel')
+                bounds = panel.bounding_box()
+                self.assertGreaterEqual(bounds['y'],0)
+                self.assertLessEqual(bounds['y']+bounds['height'],viewport['height']+1)
+                for edge in overlay.locator('.clash-facing-edge').all():
+                    box=edge.bounding_box()
+                    self.assertGreaterEqual(box['y'],bounds['y']-1)
+                    self.assertLessEqual(box['y']+box['height'],bounds['y']+bounds['height']+1)
+                if viewport['width']==390:self.page.screenshot(path='/tmp/triad46-reading-phone.png')
+                frame.wait_for_function("document.querySelector('.notation-clash-layer')?.dataset.phase==='result'")
+                for selector in ['.triad-clash-math','.triad-clash-result']:
+                    box=overlay.locator(selector).bounding_box()
+                    self.assertGreaterEqual(box['y'],bounds['y']-1)
+                    self.assertLessEqual(box['y']+box['height'],bounds['y']+bounds['height']+1)
+                if viewport['width']==1440:self.page.screenshot(path='/tmp/triad46-outcome-desktop.png')
+                if viewport['width']==844:self.page.screenshot(path='/tmp/triad46-outcome-landscape.png')
+                self.settle(frame)
+
     def test_reduced_motion_still_finishes_correctly_with_one_end_cue(self):
         self.page.emulate_media(reduced_motion='reduce')
         frame = self.load_game()
         position = self.position(frame)
         self.last_move(frame, position)
+        overlay = frame.locator('.notation-clash-layer')
+        overlay.wait_for(state='visible')
+        self.assertEqual(overlay.get_attribute('data-phase'), 'reading')
+        frame.wait_for_timeout(1450)
+        self.assertEqual(overlay.get_attribute('data-phase'), 'reading')
+        self.assertEqual(overlay.locator('.clash-facing-edge svg').count(), 2)
+        self.assertEqual(overlay.locator('.triad-clash-card').first.evaluate(
+            'node=>getComputedStyle(node).animationName'), 'none')
+        self.assertEqual(frame.evaluate('window.__cues'), [])
         self.settle(frame)
         self.assertEqual(frame.locator('#board .card.you').count(), 7)
         cues = frame.evaluate('window.__cues')
         self.assertEqual(len(cues), 1)
-        self.assertLess(cues[0]['time'] - frame.evaluate('window.__lastMoveStarted'), 1200)
+        self.assertGreaterEqual(cues[0]['time'] - frame.evaluate('window.__lastMoveStarted'), 10000,
+                                'Reduced motion retains reading time while removing movement')
 
     def test_new_game_and_home_cancel_pending_simple_and_advanced_turns(self):
         for advanced in [False, True]:
@@ -121,8 +289,10 @@ class AnimationAudioTests(TriadBrowserCase):
                         frame.wait_for_function('board.every(card=>!card)')
                     else:
                         self.home(frame)
+                    self.assertEqual(frame.locator('.notation-clash-layer:visible').count(), 0)
+                    self.assertFalse(frame.evaluate('window.MusicTriadAnimationQA.state().pending'))
                     snapshot = frame.evaluate('JSON.stringify({board,hands,turn})')
-                    frame.wait_for_timeout(2200)
+                    frame.wait_for_timeout(4100)
                     self.assertEqual(frame.evaluate('JSON.stringify({board,hands,turn})'), snapshot)
                     self.assertEqual(frame.evaluate('window.__cues'), [])
                     self.assertEqual(frame.locator('.notation-clash-layer:visible').count(), 0)

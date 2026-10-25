@@ -20,6 +20,10 @@ Advanced computer games still report `mode: "computer"` with `rules: "advanced"`
 
 The source can stay in this repository while the arcade lives in `cwoodmusic/coda-arcade`. No repository migration or Firebase change is required for this connection.
 
+## Learning pace
+
+Each card comparison gives 1.8 seconds to read the highlighted rhythms, 0.8 seconds for the clash, and 1 second to read the result. Every comparison keeps this pace, including follow-up captures. Board capture effects follow the explanations; victory music and arcade rewards wait until the entire turn finishes. Reduced motion keeps the reading and result time while removing card movement. New Game and Home cancel pending explanations immediately.
+
 ## Checks
 
 The browser checks use Python Playwright and Chromium. The arcade integration test expects the sibling `../coda-arcade` checkout; it serves both current sources under their production browser origin in an isolated test context, with external services blocked.

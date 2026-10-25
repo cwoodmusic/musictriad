@@ -547,18 +547,18 @@ body.advanced-tutorial-active .slot.tutorial-target,body.advanced-tutorial-activ
 .triad-clash-panel{width:min(94vw,540px);max-height:94dvh;overflow:hidden;text-align:center;border:2px solid #89652d;border-radius:16px;padding:14px 12px;background:#fff8e8ed;box-shadow:0 10px 30px #140c164d;contain:layout paint}
 .triad-clash-title{display:block;font:900 clamp(18px,4.5vw,25px) Georgia,serif;letter-spacing:.06em;color:#49311d}
 .triad-clash-arena{position:relative;height:224px;margin:0 auto;isolation:isolate;overflow:hidden}
-.triad-clash-card{position:absolute;top:50%;left:50%;width:140px;height:186px;margin:-93px 0 0 -70px;will-change:transform,opacity;transform:translate(var(--start-x),var(--start-y));animation:triadCardClash var(--clash-duration) cubic-bezier(.22,.65,.3,1) both}
+.triad-clash-card{position:absolute;top:50%;left:50%;width:140px;height:186px;margin:-93px 0 0 -70px;will-change:transform,opacity;transform:translate(var(--start-x),var(--start-y));animation:triadCardClash var(--clash-motion) cubic-bezier(.22,.65,.3,1) var(--clash-read) both}
 .triad-clash-card .card{min-height:0!important;width:100%!important;height:100%!important;pointer-events:none;background:#fffaf0;box-shadow:0 2px 6px #241d194d}
 .triad-clash-card .edge{width:38px!important;height:42px!important;font-size:25px!important}.triad-clash-card .edge svg{max-width:100%;max-height:100%;overflow:visible}
 .triad-clash-card .clash-facing-edge{border-radius:6px;outline:3px solid #e5ac22;background:#fff2b9;box-shadow:0 0 10px #ffcb4c66}
-.triad-clash-card.has-won .card{border-color:#318b7f}.triad-clash-card.has-lost{--end-opacity:0;--end-scale:.92;--end-rotate:var(--tilt)}
+.notation-clash-layer[data-phase="result"] .triad-clash-card.has-won .card{border-color:#318b7f}.triad-clash-card.has-lost{--end-opacity:0;--end-scale:.92;--end-rotate:var(--tilt)}
 .triad-clash-card.has-won{--end-opacity:1;--end-scale:1.04;--end-rotate:0deg;z-index:2}.triad-clash-card.is-tie{--end-opacity:1;--end-scale:.98;--end-rotate:0deg}
-.triad-clash-math{font:700 clamp(12px,3vw,16px)/1.35 system-ui;min-height:35px;color:#40382f}.triad-clash-result{font:900 clamp(15px,3.5vw,20px)/1.2 system-ui;color:#276b61;margin-top:5px}
+.triad-clash-cue{font:700 14px/1.4 system-ui;color:#615033;margin:5px 0 8px}.notation-clash-layer:not([data-phase="result"]) .triad-clash-result{visibility:hidden}.triad-clash-math{font:700 clamp(14px,3.2vw,17px)/1.35 system-ui;min-height:35px;color:#40382f}.triad-clash-result{font:900 clamp(15px,3.5vw,20px)/1.2 system-ui;color:#276b61;margin-top:5px}
 .clash-vertical .triad-clash-arena{height:316px}.clash-vertical .triad-clash-card{width:114px;height:150px;margin:-75px 0 0 -57px}.clash-vertical .triad-clash-card .edge{width:32px!important;height:34px!important;font-size:22px!important}
-.slot.capture-flash,.slot.capture-flash .card{animation-duration:.3s!important}
-body.advanced-mode .slot.adv-turn-flip,body.advanced-mode .slot.adv-tacet-clear{animation-duration:.32s!important}
+.slot.capture-flash,.slot.capture-flash .card{animation-duration:.6s!important}
+body.advanced-mode .slot.adv-turn-flip,body.advanced-mode .slot.adv-tacet-clear{animation-duration:.7s!important}
 @keyframes triadCardClash{0%,10%{transform:translate(var(--start-x),var(--start-y)) scale(1);opacity:1}40%{transform:translate(var(--hit-x),var(--hit-y)) scale(1.025);opacity:1}54%{transform:translate(var(--hit-x),var(--hit-y)) scale(.98);opacity:1}100%{transform:translate(var(--end-x),var(--end-y)) rotate(var(--end-rotate)) scale(var(--end-scale));opacity:var(--end-opacity)}}
-@media(max-height:500px){.triad-clash-panel{width:min(94vw,620px);padding:8px}.triad-clash-arena{height:170px}.triad-clash-card{width:112px;height:148px;margin:-74px 0 0 -56px}.clash-vertical .triad-clash-arena{height:276px}.clash-vertical .triad-clash-card{width:88px;height:114px;margin:-57px 0 0 -44px}.triad-clash-math{min-height:0;font-size:12px}.triad-clash-title{font-size:17px}.triad-clash-result{font-size:14px}.triad-clash-card .edge{width:30px!important;height:33px!important;font-size:21px!important}}
+@media(max-height:500px){.triad-clash-panel{width:min(94vw,620px);padding:8px}.triad-clash-arena{height:170px}.triad-clash-card{width:112px;height:148px;margin:-74px 0 0 -56px}.clash-vertical .triad-clash-arena{height:242px}.clash-vertical .triad-clash-card{width:88px;height:114px;margin:-57px 0 0 -44px}.triad-clash-math{min-height:0;font-size:12px}.triad-clash-title{font-size:17px}.triad-clash-result{font-size:14px}.triad-clash-card .edge{width:30px!important;height:33px!important;font-size:21px!important}}
 @media(prefers-reduced-motion:reduce){.triad-clash-card{animation:none;opacity:1;transform:translate(var(--start-x),var(--start-y))}.slot.capture-flash,.slot.capture-flash .card{animation:none!important}}
 </style></head><body><div class='startoverlay' id='startScreen'>
   <div class='startbox'>
@@ -971,10 +971,11 @@ async function joinTournamentLobby(){
 }
 let triadGeneration=0,triadVisualTasks=0,triadCaptureTasks=0;
 const triadVisualWaits=new Map();
+const TRIAD_CLASH_TIMING=Object.freeze({read:1800,motion:800,result:1000,capture:600,special:2000});
 const triadQuiet=()=>window.matchMedia?.('(prefers-reduced-motion:reduce)').matches===true;
-function triadPause(ms,generation=triadGeneration){
+function triadPause(ms,generation=triadGeneration,keepReadingTime=false){
  if(generation!==triadGeneration)return Promise.resolve(false);
- return new Promise(resolve=>{const timer=setTimeout(()=>{triadVisualWaits.delete(timer);resolve(generation===triadGeneration);},triadQuiet()?Math.min(ms,100):ms);triadVisualWaits.set(timer,resolve);});
+ return new Promise(resolve=>{const timer=setTimeout(()=>{triadVisualWaits.delete(timer);resolve(generation===triadGeneration);},triadQuiet()&&!keepReadingTime?Math.min(ms,100):ms);triadVisualWaits.set(timer,resolve);});
 }
 function triadVisualTask(generation=triadGeneration){triadVisualTasks++;let ended=false;return()=>{if(ended)return;ended=true;if(generation===triadGeneration)triadVisualTasks=Math.max(0,triadVisualTasks-1);};}
 function cancelTriadAnimations(){
@@ -988,27 +989,35 @@ window.cancelTriadAnimations=cancelTriadAnimations;
 window.MusicTriadAnimationQA=Object.freeze({state:()=>({generation:triadGeneration,pending:triadVisualTasks,clashes:clashQueue.length+Number(clashPlaying),captures:pendingCaptureFX.length+triadCaptureTasks,busy:!!busy,finished:!!endSoundPlayed})});
 function triadSettled(){return (!busy||endSoundPlayed)&&!clashesActive()&&triadVisualTasks===0;}
 function triadCardCopy(card){return card?{...card,e:card.e?[...card.e]:card.e,art:card.art?[...card.art]:card.art}:null;}
-async function showCardClash(item,generation=triadGeneration,duration=720){
+async function showCardClash(item,generation=triadGeneration){
  if(generation!==triadGeneration)return false;
  const d=item.d||1,vertical=Math.abs(d)>1,sign=d>0?1:-1,att=item.att,def=item.def,win=item.winner===undefined?(item.special==='conductor'||item.special==='fermata-attack'||item.av>item.dv?'attacker':item.special==='fermata-defend'||item.av<item.dv?'defender':'tie'):item.winner;
- const overlay=document.createElement('div');overlay.className='notation-clash-layer '+(vertical?'clash-vertical ':'clash-horizontal ')+'outcome-'+win;overlay.dataset.direction=String(d);overlay.dataset.result=win;overlay.setAttribute('role','status');
+ const overlay=document.createElement('div');overlay.className='notation-clash-layer '+(vertical?'clash-vertical ':'clash-horizontal ')+'outcome-'+win;overlay.dataset.phase='reading';overlay.dataset.direction=String(d);overlay.dataset.result=win;overlay.setAttribute('role','status');
  const panel=document.createElement('div');panel.className='triad-clash-panel';const title=document.createElement('strong');title.className='triad-clash-title';title.textContent=item.title||'RHYTHM CLASH!';
+ const cue=document.createElement('p');cue.className='triad-clash-cue';cue.textContent=item.special?'Read the special card rule below.':'Read the two highlighted sides.';
  const arena=document.createElement('div');arena.className='triad-clash-arena';
  function actor(card,kind,index){const shell=document.createElement('div');shell.className='triad-clash-card '+kind+(win===kind?' has-won':win==='tie'?' is-tie':' has-lost');
   const side=kind==='attacker'?-sign:sign,x=vertical?0:side*78,y=vertical?side*78:0,hitX=vertical?0:side*52,hitY=vertical?side*52:0;
-  shell.style.cssText=`--start-x:${x}px;--start-y:${y}px;--hit-x:${hitX}px;--hit-y:${hitY}px;--end-x:${win==='tie'?x:win===kind?0:vertical?0:side*300}px;--end-y:${win==='tie'?y:win===kind?0:vertical?side*290:0}px;--tilt:${side*18}deg;--clash-duration:${duration}ms`;
+  shell.style.cssText=`--start-x:${x}px;--start-y:${y}px;--hit-x:${hitX}px;--hit-y:${hitY}px;--end-x:${win==='tie'?x:win===kind?0:vertical?0:side*300}px;--end-y:${win==='tie'?y:win===kind?0:vertical?side*290:0}px;--tilt:${side*18}deg;--clash-read:${TRIAD_CLASH_TIMING.read}ms;--clash-motion:${TRIAD_CLASH_TIMING.motion}ms`;
   if(card){const face=cardEl(triadCardCopy(card));if(Number.isInteger(index))face.querySelectorAll('.edge')[index]?.classList.add('clash-facing-edge');shell.append(face);}arena.append(shell);
  }
  actor(att,'attacker',item.ai);actor(def,'defender',item.di);
  const math=document.createElement('div');math.className='triad-clash-math';math.textContent=item.math||'';
- const result=document.createElement('div');result.className='triad-clash-result';result.textContent=item.resultText||(win==='attacker'?'CAPTURE!':win==='defender'?'DEFENDER HOLDS':'TIE — NO CAPTURE');panel.append(title,arena,math,result);overlay.append(panel);document.body.append(overlay);
+ const result=document.createElement('div');result.className='triad-clash-result';result.textContent=item.resultText||(win==='attacker'?'CAPTURE!':win==='defender'?'DEFENDER HOLDS':'TIE — NO CAPTURE');panel.append(title,cue,arena,math,result);overlay.append(panel);document.body.append(overlay);
  // Measure once, before paint: touching edges remain visible at impact,
  // including the shorter cards used on landscape phones.
  const shells=[...arena.children],size=vertical?shells[0].offsetHeight:shells[0].offsetWidth,space=vertical?arena.clientHeight:arena.clientWidth,start=Math.max(size/2+2,Math.min(size/2+22,(space-size)/2-2));
  shells.forEach((shell,index)=>{const side=index?sign:-sign;shell.style.setProperty(vertical?'--start-y':'--start-x',side*start+'px');shell.style.setProperty(vertical?'--hit-y':'--hit-x',side*size/2+'px');});
- const active=await triadPause(triadQuiet()?140:duration,generation);overlay.remove();return active;
+ // Reading and result time remain even when movement is reduced.
+ try{
+  if(!await triadPause(TRIAD_CLASH_TIMING.read,generation,true))return false;
+  overlay.dataset.phase='clashing';cue.textContent='Watch the cards compare their beat values.';
+  if(!await triadPause(TRIAD_CLASH_TIMING.motion,generation))return false;
+  overlay.dataset.phase='result';cue.textContent=item.special?'This special card follows its own rule.':win==='tie'?'Equal beat values: neither card is captured.':'The longer beat value wins.';
+  return await triadPause(TRIAD_CLASH_TIMING.result,generation,true);
+ }finally{overlay.remove();}
 }
-function reset(){cancelTriadAnimations();window.codaTriadReset();stopEndCue();endSoundPlayed=false;board=Array(9).fill(null);hands=dealHands();selected=null;busy=false;if(isMp()){turn=0;render();return}turn=starter;starter=1-starter;render();if(turn===1){const generation=triadGeneration;triadPause(180,generation).then(active=>{if(active&&turn===1)cpuMove();});}}
+function reset(){cancelTriadAnimations();window.codaTriadReset();stopEndCue();endSoundPlayed=false;board=Array(9).fill(null);hands=dealHands();selected=null;busy=false;if(isMp()){turn=0;render();return}turn=starter;starter=1-starter;render();if(turn===1){const generation=triadGeneration;triadPause(500,generation).then(active=>{if(active&&turn===1)cpuMove();});}}
 function cardEl(c){let d=document.createElement('div');let mine=isMp()?c.owner===mpSeat:c.owner===0;d.className='card '+(mine?'you':'cpu');if(c&&c.cond){d.innerHTML=`<div class='conductor'>${conductorSVG()}</div>`;return d}let edges=Array.isArray(c&&c.e)?c.e:[];['t','r','b','l'].forEach((p,i)=>{let x=document.createElement('div');x.className='edge '+p;x.innerHTML=edges[i]?svg(edges[i]):'';d.appendChild(x)});if(edges.includes('f')){let s=document.createElement('div');s.className='centerstar';s.textContent='☆';d.appendChild(s)}return d}
 function render(){
  const mySeat=isMp()?mpSeat:0,myTurn=turn===mySeat;
@@ -1055,14 +1064,14 @@ function clashesForPlacement(i,c,before){
 }
 async function playNextClash(){
  if(cpuClashRevealHold||clashPlaying||!clashQueue.length)return;
- const generation=triadGeneration;clashPlaying=true;let first=true;
+ const generation=triadGeneration;clashPlaying=true;
  try{while(clashQueue.length&&generation===triadGeneration){const x=clashQueue.shift();if(x.generation!==generation)continue;
   let math='',resultText='',def=x.def,d=x.d,ai=x.ai,di=x.di;
   if(x.special==='conductor'){const target=x.targets?.[0];def=target?.card;d=target?.d||1;math='Every adjacent opponent follows the Conductor';resultText=(x.defenderIndices||[]).length+' CARDS CAPTURED';}
   else if(x.special==='fermata-attack'){math='FERMATA — automatic capture';resultText='CAPTURE!';}
   else if(x.special==='fermata-defend'){math='FERMATA — this side cannot be captured';resultText='DEFENDER HOLDS';}
   else{math=`${RHYTHM_NAMES[x.A]||x.A} (${beatText(x.av)}) ${x.av>x.dv?'>':x.av<x.dv?'<':'='} ${RHYTHM_NAMES[x.D]||x.D} (${beatText(x.dv)})`;}
-  if(!await showCardClash({...x,def,d,ai,di,math,resultText},generation,first?720:300))break;first=false;
+  if(!await showCardClash({...x,def,d,ai,di,math,resultText},generation))break;
  }}finally{if(generation===triadGeneration){clashPlaying=false;if(clashQueue.length)playNextClash();}}
 }
 const adj=[[-3,0,2],[1,1,3],[3,2,0],[-1,3,1]];function validAdj(i,j,d){return j>=0&&j<9&&!(d===1&&i%3===2)&&!(d===-1&&i%3===0)}function attacks(a,ai,d,def,di){if(!a||!def)return false;if(a.cond)return true;if(def.cond)return false;let A=a.e&&a.e[ai],D=def.e&&def.e[di];if(A==='f')return true;if(D==='f')return false;if(!S[A]||!S[D])return false;return S[A].k===S[D].k&&S[A].v>S[D].v}
@@ -1073,8 +1082,12 @@ function captureSfx(){if(musicOn){unlockAudio();triadAudioEngine()?.capture();}}
 
 async function playPendingCaptureFX(){
  if(!pendingCaptureFX.length)return;const generation=triadGeneration,list=[...new Set(pendingCaptureFX)],silent=pendingCaptureSilent;pendingCaptureFX=[];pendingCaptureSilent=false;triadCaptureTasks++;
+ // Explain the comparison first, then show the board capture. Advanced
+ // comparisons use the same overlay without the Simple clash queue.
+ while(clashPlaying||clashQueue.length||cpuClashRevealHold||document.querySelector('.notation-clash-layer,.adv-fx-overlay')){if(!await triadPause(16,generation))return;}
+ if(generation!==triadGeneration)return;
  const marked=[];for(const idx of list){const slot=document.querySelectorAll('#board .slot')[idx];if(!slot)continue;slot.classList.add('capture-flash');marked.push(slot);}
- if(!silent)captureSfx();await triadPause(300,generation);marked.forEach(slot=>slot.classList.remove('capture-flash'));if(generation===triadGeneration)triadCaptureTasks=Math.max(0,triadCaptureTasks-1);
+ if(!silent)captureSfx();await triadPause(TRIAD_CLASH_TIMING.capture,generation);marked.forEach(slot=>slot.classList.remove('capture-flash'));if(generation===triadGeneration)triadCaptureTasks=Math.max(0,triadCaptureTasks-1);
 }
 
 function apply(i,c,b=board){const live=b===board,before=live?clone(b):null;b[i]=c;let flips=0,flipped=[];for(let [d,ai,di] of adj){let j=i+d;if(!validAdj(i,j,d)||!b[j]||b[j].owner===c.owner)continue;if(c.cond||attacks(c,ai,d,b[j],di)){b[j].owner=c.owner;flips++;flipped.push(j)}}if(live){if(before)queueRhythmClashes(clashesForPlacement(i,c,before));if(flipped.length)queueCaptureFX(flipped,!!c.cond)}return flips}
@@ -1086,7 +1099,7 @@ async function humanPlace(i){
  try{const c=hands[0].splice(selected,1)[0];selected=null;apply(i,c);turn=1;render();if(!await waitForClashes(generation))return;}
  finally{done();}
  if(generation!==triadGeneration)return;if(board.every(Boolean)){busy=false;render();return;}
- if(!await triadPause(180,generation))return;await cpuMove();
+ if(!await triadPause(500,generation))return;await cpuMove();
 }
 function cloneState(){return board.map(c=>c?{owner:c.owner,cond:c.cond,e:c.e?[...c.e]:[]}:null)}function evaluateMove(ci,pos,level){let b=cloneState(),c={...hands[1][ci],e:hands[1][ci].e?[...hands[1][ci].e]:[]};let flips=apply(pos,c,b);if(level==='Easy')return Math.random()*3+flips*.5;let score=flips*6;if(c.cond){let empties=board.filter(x=>!x).length;if(flips===0&&empties>2)score-=18;else if(flips===1&&empties>4)score-=4;else if(flips>=2)score+=flips*4;if(level==='Hard'&&flips<2&&empties>3)score-=5}else for(let [d,ai,di] of adj){let j=pos+d;if(!validAdj(pos,j,d)||!b[j]||b[j].owner!==0)continue;let edge=c.e[ai];if(edge==='f')score+=3;else if(S[edge])score+=S[edge].v*.25}if(level==='Hard'){for(let j=0;j<9;j++)if(!b[j])for(let hc of hands[0]){let test=b.map(x=>x?{owner:x.owner,cond:x.cond,e:x.e?[...x.e]:[]}:null),cc={...hc,e:hc.e?[...hc.e]:[]};score-=apply(j,cc,test)*1.6}}return score+Math.random()*.25}
 async function cpuMove(token=++cpuTurnToken){
@@ -1407,10 +1420,10 @@ function useAction(owner,idx,c,target){if(c.special==='subito'){if(!board[target
  
 function advSleep(ms,generation=triadGeneration){return triadPause(ms,generation);}
 function advSlots(){return Array.from(document.querySelectorAll('#board .slot'));}
-async function advOverlay(title,sub,math='',ms=480,generation=triadGeneration){
+async function advOverlay(title,sub,math='',ms=TRIAD_CLASH_TIMING.special,generation=triadGeneration){
  if(generation!==triadGeneration)return false;const overlay=document.createElement('div');overlay.className='adv-fx-overlay';
  overlay.innerHTML=`<div class="adv-fx-card"><div class="adv-fx-title">${title}</div><div class="adv-fx-sub">${sub}</div>${math?`<div class="adv-fx-math">${math}</div>`:''}</div>`;
- document.body.append(overlay);const active=await advSleep(ms,generation);overlay.remove();return active;
+ document.body.append(overlay);const active=await triadPause(ms,generation,true);overlay.remove();return active;
 }
 function advRhythmName(k){return S[k]?S[k].n||k:k}
 function advFmt(v){return Number.isInteger(v)?String(v):String(Math.round(v*100)/100)}
@@ -1453,31 +1466,31 @@ async function animateAdvancedClashes(i,card,before,generation=triadGeneration){
  const events=[];
  for(const [d,ai,di]of advAdj){const j=i+d,def=before[j];if(!advValidAdj(i,j,d)||!def||def.owner===card.owner)continue;
   if(card.special==='conductor'){events.push({att:card,def,d,ai,di,special:'conductor',winner:'attacker',math:'The Conductor captures every adjacent opponent.'});continue;}
-  if(card.special==='qfermata'||card.special==='mmrest'){const rhythm=def.e?.[di],eligible=S[rhythm]&&S[rhythm].k===(card.special==='qfermata'?'n':'r');events.push({att:card,def,d,ai,di,winner:eligible?'attacker':'defender',math:card.special==='qfermata'?'QUARTER-NOTE FERMATA — captures notes':'MULTI-MEASURE REST — captures rests'});continue;}
+  if(card.special==='qfermata'||card.special==='mmrest'){const rhythm=def.e?.[di],eligible=S[rhythm]&&S[rhythm].k===(card.special==='qfermata'?'n':'r');events.push({att:card,def,d,ai,di,special:card.special,winner:eligible?'attacker':'defender',math:card.special==='qfermata'?'QUARTER-NOTE FERMATA — captures notes':'MULTI-MEASURE REST — captures rests'});continue;}
   if(card.special||def.special)continue;const A=card.e?.[ai],D=def.e?.[di];if(!S[A]||!S[D]||S[A].k!==S[D].k)continue;
   const av=advVal(card,ai),dv=advVal(def,di);events.push({att:card,def,d,ai,di,av,dv,math:`${advFullRhythmName(A)} · ${advFmt(av)} beats (${card.meter||'4/4'}) ${av>dv?'>':av<dv?'<':'='} ${advFullRhythmName(D)} · ${advFmt(dv)} beats (${def.meter||'4/4'})`});
  }
- for(let at=0;at<events.length;at++){if(!await showCardClash(events[at],generation,at?300:720))return false;if(card.special==='conductor')break;}
+ for(let at=0;at<events.length;at++){if(!await showCardClash(events[at],generation))return false;if(card.special==='conductor')break;}
  return generation===triadGeneration;
 }
 async function animateTurnFX(origin,generation=triadGeneration){
  const row=Math.floor(origin/4),col=origin%4,marked=[];advSlots().forEach((slot,i)=>{if(i!==origin&&board[i]&&(Math.floor(i/4)===row||i%4===col)){slot.classList.add('adv-turn-flip');marked.push(slot);}});
- const active=await advOverlay('TURN!','ROW + COLUMN REVERSED!','',420,generation);marked.forEach(slot=>slot.classList.remove('adv-turn-flip'));return active;
+ const active=await advOverlay('TURN!','ROW + COLUMN REVERSED!','',TRIAD_CLASH_TIMING.special,generation);marked.forEach(slot=>slot.classList.remove('adv-turn-flip'));return active;
 }
 async function animateTacetFX(target,targets,generation=triadGeneration){
  const clear=new Set(targets||tacetTargets(target,board)),marked=[];advSlots().forEach((slot,i)=>{if(clear.has(i)){slot.classList.add('adv-tacet-clear');marked.push(slot);}});
- const active=await advOverlay('TACET','TARGET + ADJACENT CARDS CLEARED!','',420,generation);marked.forEach(slot=>slot.classList.remove('adv-tacet-clear'));return active;
+ const active=await advOverlay('TACET','TARGET + ADJACENT CARDS CLEARED!','',TRIAD_CLASH_TIMING.special,generation);marked.forEach(slot=>slot.classList.remove('adv-tacet-clear'));return active;
 }
 async function advanceAfterHuman(generation=triadGeneration){
  if(generation!==triadGeneration)return;if(advEnd()){busy=false;render();return;}
- turn=1;busy=true;drawForTurn(1);render();if(!await advSleep(180,generation))return;await cpuMove();
+ turn=1;busy=true;drawForTurn(1);render();if(!await advSleep(500,generation))return;await cpuMove();
 }
 const advancedHumanPlace=async function(i){
  if(!advancedMode)return baseHumanPlace(i);if(selected===null||busy||turn!==0)return;const card=hands[0][selected];if(!card)return;
  if(['subito','tacet'].includes(card.special)?!board[i]:!!board[i])return;
  const generation=triadGeneration,done=triadVisualTask(generation),before=board.map(triadCardCopy);busy=true;window.codaTriadDifficultyUsed?.(document.querySelector('#level').value);
  try{
-  if(['subito','tacet'].includes(card.special)){const targets=card.special==='tacet'?tacetTargets(i,before):[i];if(!useAction(0,selected,card,i))return;selected=null;render();if(card.special==='tacet'){if(!await animateTacetFX(i,targets,generation))return;}else if(!await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',360,generation))return;}
+  if(['subito','tacet'].includes(card.special)){const targets=card.special==='tacet'?tacetTargets(i,before):[i];if(!useAction(0,selected,card,i))return;selected=null;render();if(card.special==='tacet'){if(!await animateTacetFX(i,targets,generation))return;}else if(!await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',TRIAD_CLASH_TIMING.special,generation))return;}
   else{hands[0].splice(selected,1);selected=null;applyAdvanced(i,card);render();if(card.special==='mordent'){if(!await animateTurnFX(i,generation))return;}else if(!await animateAdvancedClashes(i,card,before,generation))return;}
   if(!await waitForClashes(generation))return;
  }finally{done();}
@@ -1515,10 +1528,10 @@ cpuMove=async function(){
  try{
   const level=document.querySelector('#level').value;window.codaTriadDifficultyUsed?.(level);const move=chooseAdvancedComputerMove(level);if(!move){turn=0;return;}
   if(generation!==triadGeneration)return;const card=hands[1][move.ci],before=board.map(triadCardCopy);if(!card)return;
-  if(['subito','tacet'].includes(card.special)){const targets=card.special==='tacet'?tacetTargets(move.pos,before):[move.pos];if(!useAction(1,move.ci,card,move.pos))return;render();if(card.special==='tacet'){if(!await animateTacetFX(move.pos,targets,generation))return;}else if(!await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',360,generation))return;}
-  else{hands[1].splice(move.ci,1);applyAdvanced(move.pos,card);render();if(!await advSleep(80,generation))return;if(card.special==='mordent'){if(!await animateTurnFX(move.pos,generation))return;}else if(!await animateAdvancedClashes(move.pos,card,before,generation))return;}
+  if(['subito','tacet'].includes(card.special)){const targets=card.special==='tacet'?tacetTargets(move.pos,before):[move.pos];if(!useAction(1,move.ci,card,move.pos))return;render();if(card.special==='tacet'){if(!await animateTacetFX(move.pos,targets,generation))return;}else if(!await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',TRIAD_CLASH_TIMING.special,generation))return;}
+  else{hands[1].splice(move.ci,1);cpuClashRevealHold=true;applyAdvanced(move.pos,card);render();if(!await advSleep(80,generation))return;cpuClashRevealHold=false;if(card.special==='mordent'){if(!await animateTurnFX(move.pos,generation))return;}else if(!await animateAdvancedClashes(move.pos,card,before,generation))return;}
   await waitForClashes(generation);
- }finally{done();if(generation===triadGeneration){turn=0;busy=false;if(!advEnd())drawForTurn(0);render();}}
+ }finally{done();if(generation===triadGeneration){cpuClashRevealHold=false;turn=0;busy=false;if(!advEnd())drawForTurn(0);render();}}
 };
  reset=function(){if(!advancedMode)return baseReset();cancelTriadAnimations();window.codaTriadReset();stopEndCue();endSoundPlayed=false;advancedFinished=false;board=Array(16).fill(null);hands=advDeal();selected=null;busy=false;turn=0;render()};
 
@@ -1529,7 +1542,7 @@ cpuMove=async function(){
  setup(b,h){cancelTriadAnimations();advancedMode=true;advTutorialHarness=true;advancedFinished=false;board=b.map(x=>x?{...x,e:x.e?[...x.e]:x.e}:x);hands=[h.map(x=>x?{...x,e:x.e?[...x.e]:x.e}:x),[]];selected=null;busy=false;turn=0;render()},
  select(i){if(!advTutorialHarness)return;selected=i;render()},
  async place(i){if(!advTutorialHarness||selected===null||busy)return false;const c=hands[0][selected];if(!c||board[i])return false;const generation=triadGeneration,before=board.map(triadCardCopy);hands[0].splice(selected,1);selected=null;busy=true;applyAdvanced(i,c);render();const active=c.special==='mordent'?await animateTurnFX(i,generation):await animateAdvancedClashes(i,c,before,generation);if(!active||!await waitForClashes(generation))return false;busy=false;render();return true},
- async action(i){if(!advTutorialHarness||selected===null||busy)return false;const c=hands[0][selected];if(!c||!['subito','tacet'].includes(c.special))return false;const generation=triadGeneration,targets=c.special==='tacet'?tacetTargets(i,board):[i];if(!useAction(0,selected,c,i))return false;selected=null;busy=true;render();const active=c.special==='tacet'?await animateTacetFX(i,targets,generation):await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',360,generation);if(!active)return false;busy=false;render();return true}
+ async action(i){if(!advTutorialHarness||selected===null||busy)return false;const c=hands[0][selected];if(!c||!['subito','tacet'].includes(c.special))return false;const generation=triadGeneration,targets=c.special==='tacet'?tacetTargets(i,board):[i];if(!useAction(0,selected,c,i))return false;selected=null;busy=true;render();const active=c.special==='tacet'?await animateTacetFX(i,targets,generation):await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',TRIAD_CLASH_TIMING.special,generation);if(!active)return false;busy=false;render();return true}
  };
  function startAdvanced(){if(window.musicTriadExitAdvancedTutorial)window.musicTriadExitAdvancedTutorial();if(window.musicTriadExitTutorial)window.musicTriadExitTutorial();unlockAudio();advancedMode=true;document.body.classList.add('advanced-mode');gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;startScreen.classList.add('hidden');startMusic();reset()}
  /* Advanced mode is selected by the Home toggle; normal game buttons launch it. */

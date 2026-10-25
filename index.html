@@ -1,4 +1,4 @@
-<!doctype html><html data-coda-game="triad"><head><script src="arcade-bridge.js?v=bridge-2"></script><script src="triad-audio.js?v=audio-43"></script><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Music Triad</title><style>
+<!doctype html><html data-coda-game="triad"><head><script src="arcade-bridge.js?v=tiebreak-53"></script><script src="triad-audio.js?v=audio-43"></script><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Music Triad</title><style>
 :root{--ink:#111;--paper:#fff;--soft:#f3f3f3;--p:#dbeafe;--c:#fee2e2}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eee;color:#111}.app{max-width:980px;margin:auto;min-height:100vh;background:#fff;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.title{font-family:Georgia,serif;font-size:34px;font-weight:700}.controls{display:flex;gap:8px;flex-wrap:wrap}button,select{font:inherit;padding:9px 12px;border:1px solid #222;border-radius:8px;background:#fff;cursor:pointer}button:disabled{opacity:.55;cursor:default}.status{text-align:center;font-weight:700;margin:10px}.score{text-align:center;margin:6px}.board{width:min(72vw,500px);margin:10px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;background:#111;padding:7px;border-radius:10px}.slot{aspect-ratio:.70;border:0;border-radius:5px;background:#fafafa;padding:4px}.slot.empty:hover{background:#eee}.card{position:relative;width:100%;height:100%;min-height:110px;background:#fff;border:3px solid #111;border-radius:6px}.card.you{box-shadow:inset 0 0 0 5px #93c5fd}.card.cpu{box-shadow:inset 0 0 0 5px #fca5a5}.edge{position:absolute;display:flex;align-items:center;justify-content:center;width:42px;height:42px;font-size:27px}.t{top:4px;left:50%;transform:translateX(-50%)}.r{right:12px;top:50%;transform:translateY(-50%)}.b{bottom:4px;left:50%;transform:translateX(-50%)}.l{left:12px;top:50%;transform:translateY(-50%)}.handtitle{text-align:center;font-weight:700;margin:14px 0 7px}.hand{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.hand .pick{width:140px;aspect-ratio:.70;padding:3px;border:2px solid transparent;background:transparent}
 .tourney-panel{margin:14px auto 0;max-width:620px;padding:14px;border:2px solid #7b5c27;border-radius:12px;background:#fffaf0;text-align:center}
 .tourney-roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin:12px 0}
@@ -631,7 +631,7 @@ body.advanced-mode .slot.adv-turn-flip,body.advanced-mode .slot.adv-tacet-clear{
 <main class='app'><div class='modebadge' id='modeBadge'>VS COMPUTER</div><div class='top'><div><div class='title'>MUSIC TRIAD</div><div></div></div><div class='controls'><label>Computer: <select id='level' title='For the Hard achievement, choose Hard before the first move and keep it for the whole match.'><option>Easy</option><option selected>Normal</option><option>Hard</option></select></label><button id='homeBtn' type='button'>⌂ Home</button><button id='new'>New Game</button></div></div><div class='score' id='score'></div><div class='status' id='status'></div><div class='legend'><span><i class='sw you'></i> You</span><span><i class='sw cpu'></i> Computer</span></div><div class='board' id='board'></div><div class='handtitle'>YOUR CARDS</div><div class='hand' id='hand'></div>
 <div class='helpbar'><button class='helpbtn' id='musicToggle' type='button'>🔊 Music: On</button><button class='helpbtn' data-open='rulesModal'>📖 Rules</button><button class='helpbtn' data-open='cheatModal'>🎵 Cheat Sheet</button></div>
 </main>
-<div class='modal' id='rulesModal' role='dialog' aria-modal='true'><div class='modalbox'><button class='closemodal' data-close aria-label='Close'>×</button><h2>How to Play Music Triad</h2><div class='rulecallout'>The card you play is the attacker!</div><ol class='ruleslist'><li>Choose a card, then place it in an empty square.</li><li>Your new card attacks opponent cards directly above, below, left, or right.</li><li><b>Notes battle notes. Rests battle rests.</b></li><li>The side with the <b>longer beat value</b> captures the shorter one.</li><li>Equal beat values <b>tie</b>, so nothing flips.</li><li>Only the card just played attacks. Cards already on the board do not attack back.</li></ol><h3>Legendary Cards</h3><div class='specialbox'><b>Fermata:</b> always wins on its side. It automatically captures when attacking and cannot be captured from that side when defending.</div><div class='specialbox'><b>Conductor:</b> when played, automatically flips every adjacent opponent card.</div><h3>Winning</h3><p>When all 9 spaces are filled, whoever controls more cards wins.</p></div></div>
+<div class='modal' id='rulesModal' role='dialog' aria-modal='true'><div class='modalbox'><button class='closemodal' data-close aria-label='Close'>×</button><h2>How to Play Music Triad</h2><div class='rulecallout'>The card you play is the attacker!</div><ol class='ruleslist'><li>Choose a card, then place it in an empty square.</li><li>Your new card attacks opponent cards directly above, below, left, or right.</li><li><b>Notes battle notes. Rests battle rests.</b></li><li>The side with the <b>longer beat value</b> captures the shorter one.</li><li>Equal beat values <b>tie</b>, so nothing flips.</li><li>Only the card just played attacks. Cards already on the board do not attack back.</li></ol><h3>Legendary Cards</h3><div class='specialbox'><b>Fermata:</b> always wins on its side. It automatically captures when attacking and cannot be captured from that side when defending.</div><div class='specialbox'><b>Conductor:</b> when played, automatically flips every adjacent opponent card.</div><h3>Winning</h3><p>When the board is full, whoever controls more cards wins. Simple mode has 9 spaces; Advanced mode has 16. In Advanced mode, a tie clears the board and deals fresh cards. Keep playing until someone wins.</p></div></div>
 <div class='modal' id='cheatModal' role='dialog' aria-modal='true'><div class='modalbox'><button class='closemodal' data-close aria-label='Close'>×</button><h2>Music Triad Cheat Sheet</h2><div class='rulecallout'>Longer beat value captures shorter beat value.</div>
 <div class='cheatsection'><h3>Notes — weakest to strongest</h3>
 <div class='cheatrow'><div class='cheatsymbol' id='cheatSN'></div><div><div class='cheatname'>Sixteenth note — ¼ beat</div></div></div>
@@ -1320,7 +1320,7 @@ function initHomeModeToggle(){
 setTimeout(initHomeModeToggle,0);
 
 
-let advancedFinished=false;
+let advancedFinished=false,advancedTieNotice='';
  const baseReset=reset,baseRender=render,baseCardEl=cardEl,baseHumanPlace=(typeof originalHumanPlace==='function'?originalHumanPlace:humanPlace),baseCpuMove=cpuMove,baseAttacks=attacks;
  Object.assign(S,{dqn:{k:'n',v:1.5},dhn:{k:'n',v:3},dwn:{k:'n',v:6},der:{k:'r',v:.75},dqr:{k:'r',v:1.5},dhr:{k:'r',v:3},eSS:{k:'n',v:1},SSe:{k:'n',v:1},sEs:{k:'n',v:1}});
  Object.assign(RHYTHM_NAMES,{dqn:'DOTTED QUARTER NOTE',dhn:'DOTTED HALF NOTE',dwn:'DOTTED WHOLE NOTE',der:'DOTTED EIGHTH REST',dqr:'DOTTED QUARTER REST',dhr:'DOTTED HALF REST',eSS:'EIGHTH + TWO SIXTEENTHS',SSe:'TWO SIXTEENTHS + EIGHTH',sEs:'SIXTEENTH + EIGHTH + SIXTEENTH'});
@@ -1373,7 +1373,47 @@ let advancedFinished=false;
  cardEl=function(c){if(!advancedMode)return baseCardEl(c);if(c&&c.special){let d=document.createElement('div'),mine=c.owner===0,l=specialLabel(c.special);d.className='card '+(mine?'you':'cpu')+' '+((['subito','tacet'].includes(c.special))?'action-card':'advanced-special');if(c.special==='tacet'){d.innerHTML=`<div class="action-center"><span class="tacet-rest" aria-label="multi-measure rest"><i class="mmr-bar"></i><i class="mmr-left"></i><i class="mmr-right"></i></span><b>TACET</b></div>`}else{d.innerHTML=`<div class="action-center"><span class="big">${l[0]}</span>${l[1]}<span class="small">${l[2]}</span></div>`}return d}let d=baseCardEl(c);if(c&&c.meter){let m=document.createElement('span');m.className='time-signature';const p=c.meter.split('/');m.innerHTML=`<span>${p[0]}</span><span>${p[1]}</span>`;d.appendChild(m)}if(c&&c.art){const edges=d.querySelectorAll('.edge');c.art.forEach((a,i)=>{if(!a||!edges[i])return;let m=document.createElement('span');m.className='articulation-mark '+a;m.title=a;m.setAttribute('aria-label',a);edges[i].appendChild(m)})}return d};
  function advEnd(){return advancedFinished||board.every(Boolean)||((hands[0]||[]).length===0&&(hands[1]||[]).length===0)}
  function counts(){return board.reduce((a,c)=>{if(c)a[c.owner]++;return a},[0,0])}
- render=function(){if(!advancedMode)return baseRender();const myTurn=turn===0;let b=document.querySelector('#board');b.innerHTML='';board.forEach((c,i)=>{let x=document.createElement('button');x.className='slot '+(c?'':'empty');let chosen=selected===null?null:hands[0][selected],act=chosen&&['subito','tacet'].includes(chosen.special);x.disabled=busy||!myTurn||(selected===null?!!c:(chosen&&chosen.special==='subito'?!c:(chosen&&chosen.special==='tacet'?!c:!!c)));x.onclick=()=>advancedHumanPlace(i);if(c)x.appendChild(cardEl(c));b.appendChild(x)});let h=document.querySelector('#hand');h.innerHTML='';(hands[0]||[]).forEach((c,i)=>{let x=document.createElement('button');x.className='pick '+(selected===i?'sel':'');x.disabled=busy||!myTurn;x.onclick=()=>{selected=i;render()};x.appendChild(cardEl(c));h.appendChild(x)});let ct=counts();document.querySelector('#modeBadge').textContent='🎼 ADVANCED MODE • VS COMPUTER';document.querySelector('#score').textContent=`You ${ct[0]}  —  ${ct[1]} Computer`;let over=advEnd(),settled=triadSettled();if(!advTutorialHarness)window.codaTriadObserve(board,0,over&&settled,true);if(over&&!settled){document.querySelector('#status').textContent='Finishing the last clash…';}else if(over){advancedFinished=true;busy=true;if(!advTutorialHarness&&!endSoundPlayed){endSoundPlayed=true;stopMusic();if(ct[0]>ct[1])fanfare('win');else if(ct[1]>ct[0])fanfare('lose')}document.querySelector('#status').textContent=ct[0]>ct[1]?'You win!':ct[1]>ct[0]?'Computer wins.':'Tie game!'}else{let c=selected===null?null:hands[0][selected];document.querySelector('#status').textContent=busy?'Computer is thinking…':turn===0?(selected===null?'Choose a card.':c?.special==='subito'?'SUBITO — choose an occupied square.':c?.special==='tacet'?'TACET — choose a card to clear it and its adjacent cards.':c?.special==='mordent'?'TURN — choose an empty square.':'Choose an empty square.'):'Computer turn…'};let key=document.querySelector('#advancedKey');if(!key){key=document.createElement('div');key.id='advancedKey';key.className='advanced-key';document.querySelector('.hand').insertAdjacentElement('afterend',key)}key.textContent='ADVANCED: 4×4 • Draw 1 each turn • 4/4 = ×1 • 2/2 = ×½ • 6/8 = ×2 (no whole notes)'};
+ function redealAdvancedTie(ct){
+   // This is another board in the same match, so keep the result tracker.
+   cancelTriadAnimations();
+   advancedFinished=false;endSoundPlayed=false;
+   board=Array(16).fill(null);hands=advDeal();selected=null;busy=false;turn=0;
+   advancedTieNotice=`Tie ${ct[0]}–${ct[1]}! Fresh board and cards — choose a card.`;
+   render();
+ }
+ render=function(){
+   if(!advancedMode)return baseRender();
+   const myTurn=turn===0,b=document.querySelector('#board');b.innerHTML='';
+   board.forEach((c,i)=>{
+     const x=document.createElement('button');x.className='slot '+(c?'':'empty');
+     const chosen=selected===null?null:hands[0][selected];
+     x.disabled=busy||!myTurn||(selected===null?!!c:(chosen&&['subito','tacet'].includes(chosen.special)?!c:!!c));
+     x.onclick=()=>advancedHumanPlace(i);if(c)x.appendChild(cardEl(c));b.appendChild(x);
+   });
+   const h=document.querySelector('#hand');h.innerHTML='';
+   (hands[0]||[]).forEach((c,i)=>{
+     const x=document.createElement('button');x.className='pick '+(selected===i?'sel':'');x.disabled=busy||!myTurn;
+     x.onclick=()=>{advancedTieNotice='';selected=i;render();};x.appendChild(cardEl(c));h.appendChild(x);
+   });
+   const ct=counts();document.querySelector('#modeBadge').textContent='🎼 ADVANCED MODE • VS COMPUTER';
+   document.querySelector('#score').textContent=`You ${ct[0]}  —  ${ct[1]} Computer`;
+   const over=advEnd(),settled=triadSettled();
+   if(!advTutorialHarness)window.codaTriadObserve(board,0,over&&settled,true);
+   if(over&&!settled){document.querySelector('#status').textContent='Finishing the last clash…';}
+   else if(over&&ct[0]===ct[1]&&!advTutorialHarness){redealAdvancedTie(ct);return;}
+   else if(over){
+     advancedFinished=true;busy=true;
+     if(!advTutorialHarness&&!endSoundPlayed){endSoundPlayed=true;stopMusic();if(ct[0]>ct[1])fanfare('win');else if(ct[1]>ct[0])fanfare('lose');}
+     document.querySelector('#status').textContent=ct[0]>ct[1]?'You win!':ct[1]>ct[0]?'Computer wins.':'Tie game!';
+   }else{
+     const c=selected===null?null:hands[0][selected];
+     document.querySelector('#status').textContent=advancedTieNotice||
+       (busy?'Computer is thinking…':turn===0?(selected===null?'Choose a card.':c?.special==='subito'?'SUBITO — choose an occupied square.':c?.special==='tacet'?'TACET — choose a card to clear it and its adjacent cards.':c?.special==='mordent'?'TURN — choose an empty square.':'Choose an empty square.'):'Computer turn…');
+   }
+   let key=document.querySelector('#advancedKey');
+   if(!key){key=document.createElement('div');key.id='advancedKey';key.className='advanced-key';document.querySelector('.hand').insertAdjacentElement('afterend',key);}
+   key.textContent='ADVANCED: 4×4 • Draw 1 each turn • 4/4 = ×1 • 2/2 = ×½ • 6/8 = ×2 (no whole notes) • Ties start a fresh board';
+ };
  function advVal(card,edge){
  const rhythm=card&&card.e&&card.e[edge];
  const base=S[rhythm]?S[rhythm].v:0;
@@ -1533,13 +1573,13 @@ cpuMove=async function(){
   await waitForClashes(generation);
  }finally{done();if(generation===triadGeneration){cpuClashRevealHold=false;turn=0;busy=false;if(!advEnd())drawForTurn(0);render();}}
 };
- reset=function(){if(!advancedMode)return baseReset();cancelTriadAnimations();window.codaTriadReset();stopEndCue();endSoundPlayed=false;advancedFinished=false;board=Array(16).fill(null);hands=advDeal();selected=null;busy=false;turn=0;render()};
+ reset=function(){if(!advancedMode)return baseReset();cancelTriadAnimations();window.codaTriadReset();stopEndCue();endSoundPlayed=false;advancedFinished=false;advancedTieNotice='';board=Array(16).fill(null);hands=advDeal();selected=null;busy=false;turn=0;render()};
 
  let advTutorialHarness=false;
  window.musicTriadAdvancedTutorial={
- begin(){cancelTriadAnimations();advancedMode=true;advTutorialHarness=true;advancedFinished=false;document.body.classList.add('advanced-mode');gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;turn=0},
+ begin(){cancelTriadAnimations();advancedMode=true;advTutorialHarness=true;advancedFinished=false;advancedTieNotice='';document.body.classList.add('advanced-mode');gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;turn=0},
  stop(){if(!advTutorialHarness)return;cancelTriadAnimations();advTutorialHarness=false;selected=null;busy=false},
- setup(b,h){cancelTriadAnimations();advancedMode=true;advTutorialHarness=true;advancedFinished=false;board=b.map(x=>x?{...x,e:x.e?[...x.e]:x.e}:x);hands=[h.map(x=>x?{...x,e:x.e?[...x.e]:x.e}:x),[]];selected=null;busy=false;turn=0;render()},
+ setup(b,h){cancelTriadAnimations();advancedMode=true;advTutorialHarness=true;advancedFinished=false;advancedTieNotice='';board=b.map(x=>x?{...x,e:x.e?[...x.e]:x.e}:x);hands=[h.map(x=>x?{...x,e:x.e?[...x.e]:x.e}:x),[]];selected=null;busy=false;turn=0;render()},
  select(i){if(!advTutorialHarness)return;selected=i;render()},
  async place(i){if(!advTutorialHarness||selected===null||busy)return false;const c=hands[0][selected];if(!c||board[i])return false;const generation=triadGeneration,before=board.map(triadCardCopy);hands[0].splice(selected,1);selected=null;busy=true;applyAdvanced(i,c);render();const active=c.special==='mordent'?await animateTurnFX(i,generation):await animateAdvancedClashes(i,c,before,generation);if(!active||!await waitForClashes(generation))return false;busy=false;render();return true},
  async action(i){if(!advTutorialHarness||selected===null||busy)return false;const c=hands[0][selected];if(!c||!['subito','tacet'].includes(c.special))return false;const generation=triadGeneration,targets=c.special==='tacet'?tacetTargets(i,board):[i];if(!useAction(0,selected,c,i))return false;selected=null;busy=true;render();const active=c.special==='tacet'?await animateTacetFX(i,targets,generation):await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',TRIAD_CLASH_TIMING.special,generation);if(!active)return false;busy=false;render();return true}

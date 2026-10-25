@@ -20,6 +20,8 @@ Advanced computer games still report `mode: "computer"` with `rules: "advanced"`
 
 The source can stay in this repository while the arcade lives in `cwoodmusic/coda-arcade`. No repository migration or Firebase change is required for this connection.
 
+In Advanced mode, a tied board is cleared and both players receive fresh opening hands. The same match continues until one player wins; tied rounds do not award arcade rewards or play an end cue.
+
 ## Learning pace
 
 Each card comparison gives 1.8 seconds to read the highlighted rhythms, 0.8 seconds for the clash, and 1 second to read the result. Every comparison keeps this pace, including follow-up captures. Board capture effects follow the explanations; victory music and arcade rewards wait until the entire turn finishes. Reduced motion keeps the reading and result time while removing card movement. New Game and Home cancel pending explanations immediately.

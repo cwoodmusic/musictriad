@@ -9,10 +9,10 @@ function tracker(initial={}){
  return{value,settings,reports};
 }
 
-test('completed simple and advanced wins, losses and ties retain the real board score',()=>{
+test('completed decisive simple and advanced matches retain the real board score',()=>{
  for(const rules of ['simple','advanced'])for(const difficulty of ['Easy','Normal','Hard']){
   const size=rules==='advanced'?16:9;
-  for(const own of [3,Math.ceil(size/2),size]){
+  for(const own of [3,Math.floor(size/2)+1,size]){
    const env=tracker({rules,difficulty});
    env.value.observe(board(size,[0,1]),0,false,true);
    const owners=Array.from({length:size},(_,i)=>i<own?0:1);
@@ -22,9 +22,66 @@ test('completed simple and advanced wins, losses and ties retain the real board 
    assert.equal(env.value.observe(board(size,owners),0,true,true),null);assert.equal(env.reports.length,1);
   }
  }
- const tie=tracker({rules:'advanced',difficulty:'Hard'});tie.value.observe(board(16,[0,1]),0,false,true);
- const result=tie.value.observe(board(16,[...Array(8).fill(0),...Array(8).fill(1)]),0,true,true);
- assert.equal(result.won,false);assert.equal(result.score,8);
+});
+
+test('repeated tied Advanced rounds retain one match and report only its eventual winner',()=>{
+ const env=tracker({rules:'advanced',difficulty:'Hard'}),first=env.value.getState().id;
+ env.value.observe(board(16,[1,1,0]),0,false,true);
+ env.value.observe(board(16,[0,1,0,0]),0,false,true);
+ const tie=board(16,[0,1,...Array(7).fill(0),...Array(7).fill(1)]);
+ for(let round=0;round<3;round++){
+  assert.equal(env.value.observe(tie,0,true,true),null);
+  assert.equal(env.value.observe(tie,0,true,true),null,'A settled tie may render more than once');
+  const tied=env.value.getState();assert.equal(tied.id,first);assert.equal(tied.done,false);
+  assert.equal(tied.captures,1);assert.equal(tied.trailed,true);assert.equal(tied.observedActive,true);
+  assert.equal(env.reports.length,0,'Tied rounds do not produce a loss, payout, XP, or achievement event');
+  env.value.observe(board(16),0,false,true);
+  const cleared=env.value.getState();assert.equal(cleared.id,first);assert.equal(cleared.captures,1);
+  assert.equal(cleared.trailed,true);assert.equal(cleared.difficulty,'hard');assert.equal(cleared.previous.every(card=>card===null),true);
+  env.value.observe(board(16,[0,1]),0,false,true);
+ }
+ const result=env.value.observe(board(16,[...Array(10).fill(0),...Array(6).fill(1)]),0,true,true);
+ assert.deepEqual(result,{mode:'computer',rules:'advanced',difficulty:'hard',won:true,captures:2,comeback:true,score:10});
+ assert.equal(env.reports.length,1);assert.equal(env.reports[0].id,first);assert.equal(env.value.getState().done,true);
+ env.value.observe(board(16),0,false,true);env.value.observe(board(16,Array(16).fill(0)),0,true,true);
+ assert.equal(env.reports.length,1,'The completed match reports only once');
+ env.value.reset();assert.notEqual(env.value.getState().id,first);assert.equal(env.value.getState().captures,0);
+});
+
+test('Advanced tie continuations preserve captures and the lowest difficulty used on any board',()=>{
+ const env=tracker({rules:'advanced',difficulty:'Hard'});env.value.observe(board(16,[1,0]),0,false,true);
+ env.value.observe(board(16,[0,0]),0,false,true);
+ const tie=board(16,[...Array(8).fill(0),...Array(8).fill(1)]);
+ assert.equal(env.value.observe(tie,0,true,true),null);
+ env.settings.difficulty='Normal';assert.equal(env.value.useDifficulty('Normal'),true);env.settings.difficulty='Hard';
+ env.value.observe(board(16),0,false,true);env.value.observe(board(16,[1,0]),0,false,true);
+ env.value.observe(board(16,[0,0]),0,false,true);assert.equal(env.value.observe(tie,0,true,true),null);
+ env.settings.difficulty='Easy';assert.equal(env.value.useDifficulty('Easy'),true);env.settings.difficulty='Hard';
+ env.value.observe(board(16),0,false,true);env.value.observe(board(16,[0,1]),0,false,true);
+ const result=env.value.observe(board(16,[...Array(10).fill(0),...Array(6).fill(1)]),0,true,true);
+ assert.equal(result.difficulty,'easy');assert.equal(result.captures,3);assert.equal(env.reports.length,1);
+});
+
+test('Advanced multiplayer ties keep the same local seat and finish without a computer difficulty',()=>{
+ const env=tracker({rules:'advanced',difficulty:'Hard'});env.value.observe(board(16,[0,1]),1,false,false);
+ const first=env.value.getState().id,tie=board(16,[...Array(8).fill(0),...Array(8).fill(1)]);
+ assert.equal(env.value.observe(tie,1,true,false),null);env.value.observe(board(16),1,false,false);
+ env.value.observe(board(16,[0,1]),1,false,false);
+ const result=env.value.observe(board(16,[...Array(6).fill(0),...Array(10).fill(1)]),1,true,false);
+ assert.equal(result.mode,'multiplayer');assert.equal(result.won,true);assert.equal(result.score,10);
+ assert.equal(Object.hasOwn(result,'difficulty'),false);assert.equal(env.reports[0].id,first);
+});
+
+test('simple completion behavior is unchanged and tied tutorial boards never start a reward run',()=>{
+ const simple=tracker();simple.value.observe(board(9,[0,1]),0,false,true);
+ const result=simple.value.observe(board(9,[...Array(4).fill(0),...Array(4).fill(1)]),0,true,true);
+ assert.equal(result.won,false);assert.equal(result.score,4);assert.equal(simple.value.getState().done,true);assert.equal(simple.reports.length,1);
+ const tutorial=tracker({rules:'advanced',tutorial:true});tutorial.value.observe(board(16,[0,1]),0,false,true);
+ tutorial.value.observe(board(16,[...Array(8).fill(0),...Array(8).fill(1)]),0,true,true);
+ assert.equal(tutorial.reports.length,0);assert.equal(tutorial.value.getState().started,false);
+ tutorial.settings.tutorial=false;
+ assert.equal(tutorial.value.observe(board(16,Array(16).fill(0)),0,true,true),null);
+ assert.equal(tutorial.reports.length,0,'Leaving a tutorial cannot claim its finished snapshot');
 });
 
 test('a real capture and trailing position produce a comeback exactly once',()=>{
@@ -112,6 +169,23 @@ function windowFixture(standalone=false){
  if(standalone)win.parent=win;
  return{win,parent,messages,receive:event=>listeners.get('message')?.(event),listeners};
 }
+
+test('tied Advanced boards never queue a bridge event or consume the eventual result id',()=>{
+ const env=windowFixture(),bridge=createMessageBridge(env.win);
+ const value=createResultTracker({id:bridge.id,getSettings:()=>({rules:'advanced',difficulty:'Hard'}),report:bridge.report});
+ value.observe(board(16,[0,1]),0,false,true);
+ const tie=board(16,[...Array(8).fill(0),...Array(8).fill(1)]);
+ for(let round=0;round<2;round++){
+  value.observe(tie,0,true,true);value.observe(board(16),0,false,true);value.observe(board(16,[0,1]),0,false,true);
+  assert.equal(bridge.getState().pending,0);assert.equal(bridge.getState().reported,0);
+ }
+ value.observe(board(16,[...Array(10).fill(0),...Array(6).fill(1)]),0,true,true);
+ assert.equal(bridge.getState().pending,1);assert.equal(bridge.getState().reported,1);
+ env.receive({source:env.parent,origin:ORIGINS[0],data:{coda:1,type:'init',game:'triad',token:'tie-match-token'}});
+ const reports=env.messages.filter(message=>message.data.type==='result');assert.equal(reports.length,1);
+ assert.equal(reports[0].data.runId,'unique-match');assert.equal(reports[0].data.result.won,true);assert.equal(reports[0].data.result.score,10);
+ bridge.destroy();
+});
 
 test('the real message bridge accepts only its allowed parent handshake and deduplicates reports',()=>{
  const env=windowFixture(),bridge=createMessageBridge(env.win),result={mode:'computer',rules:'advanced',difficulty:'hard',won:true,score:10,captures:2,comeback:true};

@@ -77,6 +77,9 @@
    const own=cards.filter(card=>card?.owner===seat).length,opponent=occupied-own;
    if(!over&&state.started&&own<opponent)state.trailed=true;
    if(!over||!state.observedActive||!state.eligible)return null;
+   // An Advanced tie starts another board in this same match. Keep its run
+   // and reward eligibility open; the cleared board will refresh previous.
+   if(state.rules==='advanced'&&own===opponent)return null;
    state.done=true;
    const result={mode:state.mode,rules:state.rules,...(state.mode==='computer'?{difficulty:state.difficulty}:{}),won:own>opponent,captures:state.captures,comeback:state.trailed&&own>opponent,score:own};
    options.report?.(state.id,result);return result;

@@ -195,13 +195,13 @@ class AuditTests(TriadBrowserCase):
         }''')
         self.assertEqual(result,[{'round':'round1','index':0},{'round':'final','index':0}])
 
-    def test_private_classroom_launch_keeps_online_services_disabled(self):
+    def test_private_classroom_solo_stays_offline_with_online_modes_available(self):
         requests=[]
         self.page.on('request',lambda request:requests.append(request.url))
         self.load()
         self.assertTrue(self.page.evaluate('CodaGamePrivacy.enabled'))
-        self.assertTrue(self.page.locator('#vsClassmate').is_disabled())
-        self.assertTrue(self.page.locator('#tournamentMode').is_disabled())
+        self.assertFalse(self.page.locator('#vsClassmate').is_disabled())
+        self.assertFalse(self.page.locator('#tournamentMode').is_disabled())
         self.assertFalse(any('firebase' in url or 'googleapis' in url for url in requests))
         self.start(self.page.main_frame)
         self.assertEqual(self.page.locator('#board .slot').count(),9)

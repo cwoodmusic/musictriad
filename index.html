@@ -1,4 +1,4 @@
-<!doctype html><html data-coda-game="triad"><head><script src="classroom-privacy.js?v=classroom-54"></script><style>html[data-classroom=true] #vsClassmate,html[data-classroom=true] #tournamentMode,html[data-classroom=true] #mpPanel,html[data-classroom=true] #tourneyPanel{display:none!important}</style><script src="arcade-bridge.js?v=tiebreak-53"></script><script src="triad-audio.js?v=audio-43"></script><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Music Triad</title><style>
+<!doctype html><html data-coda-game="triad"><head><script src="classroom-privacy.js?v=multiplayer-68"></script><script src="arcade-bridge.js?v=tiebreak-53"></script><script src="triad-audio.js?v=audio-43"></script><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Music Triad</title><style>
 :root{--ink:#111;--paper:#fff;--soft:#f3f3f3;--p:#dbeafe;--c:#fee2e2}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eee;color:#111}.app{max-width:980px;margin:auto;min-height:100vh;background:#fff;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.title{font-family:Georgia,serif;font-size:34px;font-weight:700}.controls{display:flex;gap:8px;flex-wrap:wrap}button,select{font:inherit;padding:9px 12px;border:1px solid #222;border-radius:8px;background:#fff;cursor:pointer}button:disabled{opacity:.55;cursor:default}.status{text-align:center;font-weight:700;margin:10px}.score{text-align:center;margin:6px}.board{width:min(72vw,500px);margin:10px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;background:#111;padding:7px;border-radius:10px}.slot{aspect-ratio:.70;border:0;border-radius:5px;background:#fafafa;padding:4px}.slot.empty:hover{background:#eee}.card{position:relative;width:100%;height:100%;min-height:110px;background:#fff;border:3px solid #111;border-radius:6px}.card.you{box-shadow:inset 0 0 0 5px #93c5fd}.card.cpu{box-shadow:inset 0 0 0 5px #fca5a5}.edge{position:absolute;display:flex;align-items:center;justify-content:center;width:42px;height:42px;font-size:27px}.t{top:4px;left:50%;transform:translateX(-50%)}.r{right:12px;top:50%;transform:translateY(-50%)}.b{bottom:4px;left:50%;transform:translateX(-50%)}.l{left:12px;top:50%;transform:translateY(-50%)}.handtitle{text-align:center;font-weight:700;margin:14px 0 7px}.hand{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.hand .pick{width:140px;aspect-ratio:.70;padding:3px;border:2px solid transparent;background:transparent}
 .tourney-panel{margin:14px auto 0;max-width:620px;padding:14px;border:2px solid #7b5c27;border-radius:12px;background:#fffaf0;text-align:center}
 .tourney-roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin:12px 0}
@@ -667,7 +667,21 @@ function clone(x){return JSON.parse(JSON.stringify(x))}
 function boardToWire(b){return b.map(c=>c?clone(c):{empty:true})}
 function boardFromWire(b){const a=Array.isArray(b)?b:Object.keys(b||{}).sort((x,y)=>Number(x)-Number(y)).map(k=>b[k]);return Array.from({length:9},(_,i)=>{const c=a&&a[i];return !c||c.empty?null:clone(c)})}
 function stateFromWire(s){return{board:boardFromWire(s&&s.board),hands:clone((s&&s.hands)||[[],[]]),turn:Number((s&&s.turn)??0),finished:!!(s&&s.finished)}}
-async function initFirebase(){if(window.CodaGamePrivacy.enabled)throw Error('Online multiplayer is off in classroom mode.');await window.CodaGameFirebaseReady;if(!window.firebase)throw Error('Online play could not connect.');if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);if(!firebase.auth().currentUser)await firebase.auth().signInAnonymously();mpUid=firebase.auth().currentUser.uid;mpDb=firebase.database()}
+let firebaseInitialization=null;
+function initFirebase(){
+ if(firebaseInitialization)return firebaseInitialization;
+ firebaseInitialization=(async()=>{
+  const ready=await window.CodaGamePrivacy.loadFirebaseSDK({multiplayer:true});
+  if(!ready||!window.firebase)throw Error('Online play could not connect. Check your connection and try again.');
+  if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+  const auth=firebase.auth();
+  if(window.CodaGamePrivacy.enabled&&typeof auth.setPersistence==='function')
+   await auth.setPersistence(firebase.auth.Auth.Persistence.NONE);
+  if(!auth.currentUser)await auth.signInAnonymously();
+  mpUid=auth.currentUser.uid;mpDb=firebase.database();
+ })().catch(error=>{firebaseInitialization=null;throw error;});
+ return firebaseInitialization;
+}
 function setModeBadge(){const b=document.querySelector('#modeBadge'),lab=document.querySelector('#level').closest('label');if(isMp()){b.textContent=mpRoom?`VS CLASSMATE • ROOM ${mpRoom}`:'VS CLASSMATE';lab.style.display='none'}else{b.textContent='VS COMPUTER';lab.style.display=''}}
 
 
@@ -1234,9 +1248,9 @@ async function joinClassmateRoom(){
 
 function listenRoom(){if(!mpRef)return;const ref=mpRef;ref.on('value',snap=>{if(ref!==mpRef)return;const room=snap.val();if(!room){mpError('That room no longer exists.');return}if(mpSeat===0&&!room.p2){document.querySelector('#roomWait').textContent='Waiting for your classmate…';return}if(room.game){const old=board?clone(board):Array(9).fill(null),s=stateFromWire(room.game);board=s.board;hands=s.hands;turn=s.turn;busy=false;selected=null;if(!board.some(Boolean)){cancelTriadAnimations();window.codaTriadReset();endSoundPlayed=false;}startScreen.classList.add('hidden');setModeBadge();if(!endSoundPlayed)startMusic();const changed=[];board.forEach((c,i)=>{if(c&&old[i]&&c.owner!==old[i].owner)changed.push(i)});const placed=board.findIndex((c,i)=>c&&!old[i]);const mpClashes=placed>=0?clashesForPlacement(placed,board[placed],old):[];if(mpClashes.length)queueRhythmClashes(mpClashes);if(changed.length)queueCaptureFX(changed);busy=clashesActive();render();const generation=triadGeneration;if(busy)waitForClashes(generation).then(active=>{if(active){busy=false;render();}})}})}
 document.querySelector('#vsComputer').addEventListener('click',enterComputer);
-document.querySelector('#vsClassmate').addEventListener('click',()=>{if(window.CodaGamePrivacy.enabled)return;unlockAudio();closeModePanels('mpPanel');document.querySelector('#mpPanel').hidden=false;mpError('')});
+document.querySelector('#vsClassmate').addEventListener('click',()=>{if(window.musicTriadAdvancedSelected?.())return;unlockAudio();closeModePanels('mpPanel');document.querySelector('#mpPanel').hidden=false;mpError('')});
 document.querySelector('#viewFinalBracket').addEventListener('click',()=>{hideChampionSplash();returnToTournamentLobby()});
-document.querySelector('#tournamentMode').addEventListener('click',()=>{if(window.CodaGamePrivacy.enabled)return;unlockAudio();setTournamentControls();closeModePanels('tourneyPanel');document.querySelector('#tourneyPanel').hidden=false;tournamentError('')});
+document.querySelector('#tournamentMode').addEventListener('click',()=>{if(window.musicTriadAdvancedSelected?.())return;unlockAudio();setTournamentControls();closeModePanels('tourneyPanel');document.querySelector('#tourneyPanel').hidden=false;tournamentError('')});
 document.querySelector('#createTournament').addEventListener('click',createTournamentLobby);
 document.querySelector('#showTournamentJoin').addEventListener('click',()=>{document.querySelector('#createdTournament').hidden=true;document.querySelector('#studentTournamentStatus').hidden=true;document.querySelector('#joinTournament').hidden=false;tournamentError('')});
 document.querySelector('#joinTournamentNow').addEventListener('click',joinTournamentLobby);
@@ -1357,14 +1371,14 @@ function syncHomeModeToggle(){
  t.checked=!!advancedMode;
  document.getElementById('simpleModeLabel')?.classList.toggle('active',!advancedMode);
  document.getElementById('advancedModeLabel')?.classList.toggle('active',!!advancedMode);
- const unavailable=!!advancedMode||window.CodaGamePrivacy.enabled;
+ const unavailable=!!advancedMode;
  for(const id of ['vsClassmate','tournamentMode']){
    const b=document.getElementById(id);
    if(!b)continue;
    b.disabled=unavailable;
    b.classList.toggle('mode-unavailable',unavailable);
    b.setAttribute('aria-disabled',String(unavailable));
-   b.title=window.CodaGamePrivacy.enabled?'Online play is off in classroom mode.':unavailable?'Coming soon in Advanced Mode':'';
+   b.title=unavailable?'Coming soon in Advanced Mode':'';
  }
 }
 function initHomeModeToggle(){

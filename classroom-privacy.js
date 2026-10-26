@@ -1,4 +1,4 @@
-/* Classroom games report progress to the parent, without separate cloud users. */
+/* Classroom progress stays with the parent; online rooms connect on request. */
 (function(root){
  'use strict';
  let enabled=false;
@@ -14,8 +14,8 @@
  }catch{}
  if(enabled)root.document.documentElement.dataset.classroom='true';
  let loading=null;
- function loadFirebaseSDK(){
-  if(enabled)return Promise.resolve(false);
+ function loadFirebaseSDK(options={}){
+  if(enabled&&options?.multiplayer!==true)return Promise.resolve(false);
   if(loading)return loading;
   loading=(async()=>{
    for(const name of ['app','auth','database']){
@@ -25,7 +25,7 @@
      script.onload=()=>resolve(true);script.onerror=()=>resolve(false);
      root.document.head.append(script);
     });
-    if(!loaded)return false;
+    if(!loaded){loading=null;return false;}
    }
    return true;
   })();

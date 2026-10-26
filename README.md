@@ -1,6 +1,6 @@
 # Music Triad
 
-A browser-based musical card game with Simple and Advanced rules, computer matches, classroom multiplayer, and tournaments.
+A browser-based musical card game with Simple and Advanced rules, computer matches, optional online multiplayer, and two-to-four-player tournaments.
 
 ## Local development
 
@@ -10,7 +10,7 @@ The game is static HTML/CSS/JavaScript and needs no package installation or buil
 python3 -m http.server 8004 --bind 127.0.0.1
 ```
 
-Single-player games and their arcade reward reports need no credentials. Classroom multiplayer and tournaments retain their existing Firebase configuration; this update does not change Firebase projects, rules, or stored data.
+Single-player games and their arcade reward reports need no credentials. Standalone multiplayer and tournaments retain their existing Firebase configuration; this update does not change Firebase projects, rules, or stored data.
 
 ## Arcade rewards
 
@@ -34,6 +34,8 @@ The browser checks use Python Playwright and Chromium. The arcade integration te
 node --test tests/*.test.cjs
 python3 tests/arcade-integration-browser.py
 python3 tests/animation-audio-browser.py
+python3 tests/advanced-tiebreak-browser.py
+python3 tests/audit-browser.py
 ```
 
 ## Publishing
@@ -43,3 +45,10 @@ GitHub Pages serves the `main` branch at `https://cwoodmusic.github.io/musictria
 ## Classroom privacy
 
 Launch with `?classroom=1` (or embed in Coda with classroom privacy on) to use private parent-profile progress only. Firebase SDKs are not loaded and classmate/tournament services are unavailable in this mode. Same-origin classroom frames inherit their parent's scoped progress store before the game reads local progress. Single-player Simple and Advanced games, tied-board continuation, audio, and the arcade result bridge remain available. Standalone play without the flag retains its existing online features.
+
+Tournament lobbies support 2–4 players, matching the existing first-round and
+championship database paths. Full lobbies cannot claim a fifth color slot;
+older oversized lobbies must be replaced before starting. Leaving an online
+session detaches its listeners and cancels pending returns, so delayed snapshots,
+startup requests, or tutorial completion timers cannot replace a later match.
+Tournament labels are rendered as text, including values received from Firebase.

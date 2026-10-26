@@ -579,7 +579,7 @@ body.advanced-mode .slot.adv-turn-flip,body.advanced-mode .slot.adv-tacet-clear{
   <div id='createdTournament' hidden>
     <div class='mp-note'>Tournament code:</div>
     <div class='mp-code' id='tournamentCode'>-----</div>
-    <div class='mp-note'>Players in lobby: <strong id='tournamentCount'>0</strong></div>
+    <div class='mp-note'>Players in lobby: <strong id='tournamentCount'>0</strong> · 2–4 players per tournament</div>
     <div class='tourney-roster' id='tournamentRoster'></div>
     <button id='startTournament' type='button' disabled>START TOURNAMENT</button>
   </div>
@@ -658,7 +658,7 @@ function conductorSVG(){return `<svg viewBox='0 0 100 130' width='70%' height='7
 const pool=['sn','en','qn','ee','ssss','hn','wn','er','qr','hr','wr'];function rand(a){return a[Math.floor(Math.random()*a.length)]}function card(owner,rare=false){let e=[rand(pool),rand(pool),rand(pool),rand(pool)];if(rare)e[Math.floor(Math.random()*4)]='f';return{owner,e}}
 function dealHands(){let h=[[card(0),card(0),card(0),card(0),card(0)],[card(1),card(1),card(1),card(1),card(1)]],slots=[];for(let o=0;o<2;o++)for(let i=0;i<5;i++)slots.push([o,i]);let s=rand(slots),roll=Math.random();if(roll<.1)h[s[0]][s[1]]={owner:s[0],cond:true,e:[]};else if(roll<.45)h[s[0]][s[1]]=card(s[0],true);return h}
 let board, hands, selected, turn, busy, starter=0, endSoundPlayed=false;
-let gameMode='computer',mpRoom=null,mpSeat=null,mpDb=null,mpRef=null,mpUid=null;
+let gameMode='computer',mpRoom=null,mpSeat=null,mpDb=null,mpRef=null,mpUid=null,onlineSessionVersion=0;
 const FIREBASE_CONFIG={apiKey:"AIzaSyBc742bvSjZ3VIrJlH8WZ1UlGGCKFFENho",authDomain:"music-triad.firebaseapp.com",databaseURL:"https://music-triad-default-rtdb.firebaseio.com",projectId:"music-triad",storageBucket:"music-triad.firebasestorage.app",messagingSenderId:"276316405918",appId:"1:276316405918:web:d09c11c2422cf6bf95bb8f"};
 function isMp(){return gameMode==='classmate'}
 function mpError(msg){const e=document.querySelector('#mpError');if(e)e.textContent=msg||''}
@@ -672,6 +672,9 @@ function setModeBadge(){const b=document.querySelector('#modeBadge'),lab=documen
 
 
 const TOURNAMENT_COLORS=['Red','Blue','Orange','Green','Cyan','Brown','Purple','Grey','Pink','Yellow','Teal','Lime','Navy','Maroon','Gold','Silver'];
+// The current round1/final bracket supports two to four players.
+const TOURNAMENT_MAX_PLAYERS=4;
+let tournamentReturnTimer=null;
 let tournamentRef=null,tournamentCodeValue='',tournamentColor='',tournamentIsHost=false,tournamentMatch=null,tournamentProvisioning=false;
 let tournamentGameContext=null,tournamentReportedRoom='';
 function tournamentCodeGen(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:5},()=>a[Math.floor(Math.random()*a.length)]).join('')}
@@ -684,33 +687,27 @@ function renderTournamentRoster(players,targetId){
   entries.forEach(([color])=>{const d=document.createElement('div');d.className='tourney-chip';d.textContent=color;box.appendChild(d)});
   const count=document.querySelector('#tournamentCount');if(count)count.textContent=String(entries.length);
   const start=document.querySelector('#startTournament');
-  if(start&&tournamentIsHost){start.disabled=entries.length<2;start.textContent=entries.length<2?'WAITING FOR PLAYERS…':'START TOURNAMENT'}
+  if(start&&tournamentIsHost){start.disabled=entries.length<2||entries.length>TOURNAMENT_MAX_PLAYERS;start.textContent=entries.length<2?'WAITING FOR PLAYERS…':entries.length>TOURNAMENT_MAX_PLAYERS?'4 PLAYERS MAXIMUM':'START TOURNAMENT'}
+}
+function tournamentText(className,text){
+  const node=document.createElement('div');node.className=className;node.textContent=String(text);return node;
 }
 function renderTournamentBracket(bracket){
   const wrap=document.querySelector('#tournamentBracketWrap'),box=document.querySelector('#tournamentBracket');
   if(!wrap||!box)return;
-  if(!bracket||!bracket.round1){wrap.hidden=true;box.innerHTML='';return}
-  wrap.hidden=false;box.innerHTML='';
-  const matches=tournamentRound1Matches(bracket.round1);
-  matches.forEach((m,i)=>{
+  box.replaceChildren();
+  if(!bracket||!bracket.round1){wrap.hidden=true;return}
+  wrap.hidden=false;
+  function match(title,a,b,result){
     const card=document.createElement('div');card.className='tourney-match';
-    const a=m&&m.a?m.a:'—',b=m&&m.b?m.b:'BYE';
-    const result=m&&m.winner?`<div class='tourney-bye'>WINNER: ${m.winner}</div>`:(m&&m.b?'':"<div class='tourney-bye'>Automatic bye to the next round</div>");
-    card.innerHTML=`<div class='tourney-match-title'>ROUND 1 • MATCH ${i+1}</div><div class='tourney-player'>${a}</div><div class='tourney-vs'>VS</div><div class='tourney-player'>${b}</div>${result}`;
-    box.appendChild(card);
-  });
-  if(bracket.final){
-    const m=bracket.final,card=document.createElement('div');card.className='tourney-match';
-    const result=m.winner?`<div class='tourney-bye'>🏆 WINNER: ${m.winner}</div>`:'';
-    card.innerHTML=`<div class='tourney-match-title'>CHAMPIONSHIP</div><div class='tourney-player'>${m.a||'—'}</div><div class='tourney-vs'>VS</div><div class='tourney-player'>${m.b||'—'}</div>${result}`;
-    box.appendChild(card);
+    card.append(tournamentText('tourney-match-title',title),tournamentText('tourney-player',a),tournamentText('tourney-vs','VS'),tournamentText('tourney-player',b));
+    if(result)card.append(tournamentText('tourney-bye',result));box.append(card);
   }
-  if(bracket.champion){
-    const champ=document.createElement('div');champ.className='tourney-match';
-    champ.innerHTML=`<div class='tourney-match-title'>TOURNAMENT CHAMPION</div><div class='tourney-player'>🏆 ${bracket.champion} 🏆</div>`;
-    box.appendChild(champ);
-  }
+  tournamentRound1Matches(bracket.round1).forEach((m,i)=>match('ROUND 1 • MATCH '+(i+1),m?.a||'—',m?.b||'BYE',m?.winner?'WINNER: '+m.winner:m?.b?'':'Automatic bye to the next round'));
+  if(bracket.final){const m=bracket.final;match('CHAMPIONSHIP',m.a||'—',m.b||'—',m.winner?'🏆 WINNER: '+m.winner:'');}
+  if(bracket.champion){const card=document.createElement('div');card.className='tourney-match';card.append(tournamentText('tourney-match-title','TOURNAMENT CHAMPION'),tournamentText('tourney-player','🏆 '+bracket.champion+' 🏆'));box.append(card);}
 }
+
 function tournamentRound1Matches(round1){
   if(!round1)return [];
   return Array.isArray(round1)?round1:Object.keys(round1).sort((a,b)=>Number(a)-Number(b)).map(k=>round1[k]);
@@ -718,29 +715,30 @@ function tournamentRound1Matches(round1){
 function findMyTournamentMatch(t){
   if(!tournamentColor||!t||!t.bracket)return null;
   const f=t.bracket.final;
-  if(f&&!f.winner&&(f.a===tournamentColor||f.b===tournamentColor))return {round:'final',index:0,...f};
+  if(f&&!f.winner&&(f.a===tournamentColor||f.b===tournamentColor))return {...f,round:'final',index:0};
   const matches=tournamentRound1Matches(t.bracket.round1);
   for(let i=0;i<matches.length;i++){
     const m=matches[i];
-    if(m&&!m.winner&&m.b&&(m.a===tournamentColor||m.b===tournamentColor))return {round:'round1',index:i,...m};
+    if(m&&!m.winner&&m.b&&(m.a===tournamentColor||m.b===tournamentColor))return {...m,round:'round1',index:i};
   }
   return null;
 }
 async function provisionTournamentRoom(match){
   if(tournamentProvisioning||!tournamentRef||!match||match.a!==tournamentColor||match.roomCode)return;
-  tournamentProvisioning=true;
+  tournamentProvisioning=true;const tournament=tournamentRef,session=onlineSessionVersion;
+  const current=()=>session===onlineSessionVersion&&tournament===tournamentRef;
   try{
-    await initFirebase();
+    await initFirebase();if(!current())return;
     for(let tries=0;tries<10;tries++){
-      const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),ls=await lobby.once('value');
+      const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),ls=await lobby.once('value');if(!current())return;
       if(ls.exists())continue;
       const ref=mpDb.ref('rooms/'+code);
       const fb=Array(9).fill(null),fh=dealHands();
       await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,game:{board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false}});
-      await lobby.set(mpUid);
+      await lobby.set(mpUid);if(!current()){await ref.remove();await lobby.remove();return;}
       ref.child('p1Online').onDisconnect().set(false);
       const matchPath=match.round==='final'?'bracket/final':'bracket/round1/'+match.index;
-      const matchRef=tournamentRef.child(matchPath);
+      const matchRef=tournament.child(matchPath);
       const claim=await matchRef.child('roomCode').transaction(current=>current===null?code:current);
       if(claim.committed&&claim.snapshot.val()===code){
         await matchRef.child('status').set('ready');
@@ -751,8 +749,8 @@ async function provisionTournamentRoom(match){
       return;
     }
     throw new Error("Couldn't prepare the tournament match.");
-  }catch(e){tournamentError(e.message||String(e))}
-  finally{tournamentProvisioning=false}
+  }catch(e){if(current())tournamentError(e.message||String(e))}
+  finally{if(current())tournamentProvisioning=false}
 }
 function updateTournamentMatchUI(t){
   const panel=document.querySelector('#tournamentMatchReady'),pair=document.querySelector('#tournamentMatchPair'),
@@ -778,9 +776,11 @@ function updateTournamentMatchUI(t){
   }
 }
 async function playTournamentMatch(){
+  const tournament=tournamentRef,session=onlineSessionVersion;
+  const current=()=>session===onlineSessionVersion&&tournament===tournamentRef;
   unlockAudio();
   try{
-    tournamentError(''); await initFirebase();
+    tournamentError(''); await initFirebase();if(!current())return;
     const m=tournamentMatch;
     if(!m||!m.roomCode||!m.b)throw new Error('Your match is not ready yet.');
     tournamentGameContext={round:m.round||'round1',index:m.index,a:m.a,b:m.b,roomCode:m.roomCode};setTournamentControls();
@@ -789,42 +789,45 @@ async function playTournamentMatch(){
     gameMode='classmate';mpRoom=code;mpRef=ref;selected=null;busy=false;
     if(tournamentColor===m.a){
       mpSeat=0;
-      const room=await ref.once('value');
+      const room=await ref.once('value');if(!current())return;
       if(!room.exists()||room.child('p1').val()!==mpUid)throw new Error('Your tournament room could not be opened.');
       await ref.child('p1Online').set(true);
       ref.child('p1Online').onDisconnect().set(false);
     }else if(tournamentColor===m.b){
       mpSeat=1;
       const claim=await ref.child('p2').transaction(current=>{if(current===null)return mpUid;if(current===mpUid)return current;return});
+      if(!current())return;
       if(!claim.committed||claim.snapshot.val()!==mpUid)throw new Error('That tournament match already has two players.');
       await ref.child('p2Online').set(true);
       ref.child('p2Online').onDisconnect().set(false);
     }else throw new Error('This is not your tournament match.');
-    setModeBadge();
+    if(!current())return;setModeBadge();
     listenRoom();
   }catch(e){
+    if(!current())return;
     gameMode='computer';mpRoom=null;mpSeat=null;mpRef=null;setModeBadge();
     tournamentError(e.message||String(e));
   }
 }
 
-async function advanceTournamentAfterResult(){
-  if(!tournamentRef)return;
-  const snap=await tournamentRef.once('value'),t=snap.val()||{},br=t.bracket||{};
+async function advanceTournamentAfterResult(ref=tournamentRef){
+  if(!ref)return;const session=onlineSessionVersion;
+  const snap=await ref.once('value'),t=snap.val()||{},br=t.bracket||{};
+  if(ref!==tournamentRef||session!==onlineSessionVersion)return;
   if(br.champion)return;
   const r1=tournamentRound1Matches(br.round1);
   const winners=r1.map(m=>m&&(m.winner||(!m.b?m.a:null)));
   if(!winners.length||winners.some(w=>!w))return;
   if(winners.length===1){
-    await tournamentRef.update({'bracket/champion':winners[0],status:'finished'});return;
+    await ref.update({'bracket/champion':winners[0],status:'finished'});return;
   }
   if(winners.length===2&&!br.final){
-    await tournamentRef.child('bracket/final').transaction(cur=>cur||{a:winners[0],b:winners[1],status:'waiting'});
+    await ref.child('bracket/final').transaction(cur=>cur||{a:winners[0],b:winners[1],status:'waiting'});
     return;
   }
 }
 function returnToTournamentLobby(){
-  setTournamentControls();
+  cancelTournamentReturn();setTournamentControls();
   // Leave the finished match view and reveal the live tournament bracket again.
   stopMusic();
   if(mpRef)mpRef.off();
@@ -837,32 +840,42 @@ function returnToTournamentLobby(){
   if(panel)panel.hidden=false;
   requestAnimationFrame(()=>{startScreen.scrollTop=0;window.scrollTo(0,0)});
 }
+function cancelTournamentReturn(){clearTimeout(tournamentReturnTimer);tournamentReturnTimer=null;}
 function scheduleTournamentReturn(){
-  if(scheduleTournamentReturn.pending)return;
-  scheduleTournamentReturn.pending=true;
-  setTimeout(()=>{
-    scheduleTournamentReturn.pending=false;
+  if(tournamentReturnTimer!==null)return;
+  const ref=tournamentRef,room=mpRoom,match=tournamentGameContext;
+  tournamentReturnTimer=setTimeout(()=>{
+    tournamentReturnTimer=null;
+    if(ref!==tournamentRef||room!==mpRoom||match!==tournamentGameContext)return;
     returnToTournamentLobby();
   },1200);
 }
+function leaveOnlineSession(){
+  onlineSessionVersion++;tournamentProvisioning=false;cancelTournamentReturn();
+  if(mpRef)mpRef.off();if(tournamentRef)tournamentRef.off();
+  mpRef=null;mpRoom=null;mpSeat=null;tournamentRef=null;tournamentCodeValue='';tournamentColor='';tournamentIsHost=false;tournamentMatch=null;tournamentGameContext=null;tournamentReportedRoom='';
+  resetChampionSplash();setTournamentControls();
+}
+
 
 async function reportTournamentResult(counts){
-  const ctx=tournamentGameContext;
-  if(!ctx||!tournamentRef||!mpRoom||tournamentReportedRoom===mpRoom)return;
+  const ctx=tournamentGameContext,ref=tournamentRef,room=mpRoom,session=onlineSessionVersion;
+  const current=()=>session===onlineSessionVersion&&ref===tournamentRef&&room===mpRoom&&ctx===tournamentGameContext;
+  if(!ctx||!ref||!room||tournamentReportedRoom===room)return;
   if(!board.every(Boolean))return;
   const winnerSeat=counts[0]>counts[1]?0:1;
   const winner=winnerSeat===0?ctx.a:ctx.b;
   const path=ctx.round==='final'?'bracket/final':'bracket/round1/'+ctx.index;
   try{
-    const matchRef=tournamentRef.child(path);
+    const matchRef=ref.child(path);
     const claim=await matchRef.child('winner').transaction(cur=>cur||winner);
-    if(!claim.committed||claim.snapshot.val()!==winner)return;
-    tournamentReportedRoom=mpRoom;
-    await matchRef.update({status:'complete',score0:counts[0],score1:counts[1]});
-    if(ctx.round==='final')await tournamentRef.update({'bracket/champion':winner,status:'finished'});
-    else await advanceTournamentAfterResult();
-    scheduleTournamentReturn();
-  }catch(e){console.error('Tournament result report failed:',e)}
+    if(!current()||!claim.committed||claim.snapshot.val()!==winner)return;
+    tournamentReportedRoom=room;
+    await matchRef.update({status:'complete',score0:counts[0],score1:counts[1]});if(!current())return;
+    if(ctx.round==='final')await ref.update({'bracket/champion':winner,status:'finished'});
+    else await advanceTournamentAfterResult(ref);
+    if(current())scheduleTournamentReturn();
+  }catch(e){if(current())console.error('Tournament result report failed:',e)}
 }
 
 
@@ -884,8 +897,8 @@ function showChampionSplash(champion){
   championSplashSeen=champion;
   const splash=document.querySelector('#championSplash'),name=document.querySelector('#championName');
   if(!splash||!name)return;
-  name.textContent=champion.toUpperCase();
-  const cssColor=champion.toLowerCase()==='grey'?'gray':champion.toLowerCase();
+  name.textContent=String(champion).toUpperCase();
+  const cssColor=String(champion).toLowerCase()==='grey'?'gray':String(champion).toLowerCase();
   name.style.color=cssColor;
   buildChampionConfetti();splash.hidden=false;
 }
@@ -895,6 +908,7 @@ function listenTournament(ref){
   if(tournamentRef)tournamentRef.off();
   tournamentRef=ref;
   ref.on('value',snap=>{
+    if(ref!==tournamentRef)return;
     const t=snap.val();
     if(!t){tournamentError('That tournament no longer exists.');return}
     renderTournamentRoster(t.players,'tournamentRoster');
@@ -914,24 +928,26 @@ async function startTournamentBracket(){
   try{
     tournamentError('');
     if(!tournamentIsHost||!tournamentRef)throw new Error('Only the tournament host can start it.');
-    const snap=await tournamentRef.once('value'),t=snap.val()||{};
+    const ref=tournamentRef,session=onlineSessionVersion,snap=await ref.once('value'),t=snap.val()||{};
+    if(ref!==tournamentRef||session!==onlineSessionVersion)return;
     if(t.host!==mpUid)throw new Error('Only the tournament host can start it.');
     if(t.status!=='waiting')return;
     const colors=Object.keys(t.players||{}).filter(c=>t.players[c]);
     if(colors.length<2)throw new Error('At least 2 players are needed.');
+    if(colors.length>TOURNAMENT_MAX_PLAYERS)throw new Error('Tournaments support 2–4 players. Create a new lobby for up to 4 players.');
     const order=shuffled(colors),round1=[];
     for(let i=0;i<order.length;i+=2){const b=order[i+1]||null;round1.push({a:order[i],b,winner:b?null:order[i],status:b?'waiting':'complete'})}
-    await tournamentRef.update({status:'started',started:firebase.database.ServerValue.TIMESTAMP,bracket:{order,round1}});
+    await ref.update({status:'started',started:firebase.database.ServerValue.TIMESTAMP,bracket:{order,round1}});
   }catch(e){tournamentError(e.message||String(e))}
 }
 async function createTournamentLobby(){
-  unlockAudio();
+  leaveOnlineSession();const session=onlineSessionVersion;unlockAudio();
   try{
-    tournamentError('');resetChampionSplash();await initFirebase();
+    tournamentError('');resetChampionSplash();await initFirebase();if(session!==onlineSessionVersion)return;
     for(let tries=0;tries<10;tries++){
-      const code=tournamentCodeGen(),ref=mpDb.ref('tournaments/'+code),snap=await ref.once('value');
+      const code=tournamentCodeGen(),ref=mpDb.ref('tournaments/'+code),snap=await ref.once('value');if(session!==onlineSessionVersion)return;
       if(snap.exists())continue;
-      await ref.set({host:mpUid,status:'waiting',created:firebase.database.ServerValue.TIMESTAMP,players:{}});
+      await ref.set({host:mpUid,status:'waiting',created:firebase.database.ServerValue.TIMESTAMP,players:{}});if(session!==onlineSessionVersion)return;
       tournamentCodeValue=code;tournamentColor='';tournamentIsHost=true;listenTournament(ref);
       document.querySelector('#createdTournament').hidden=false;
       document.querySelector('#joinTournament').hidden=true;
@@ -940,32 +956,34 @@ async function createTournamentLobby(){
       return;
     }
     throw new Error("Couldn't create a tournament. Try again.");
-  }catch(e){tournamentError(e.message||String(e))}
+  }catch(e){if(session===onlineSessionVersion)tournamentError(e.message||String(e))}
 }
 async function joinTournamentLobby(){
-  unlockAudio();
+  leaveOnlineSession();const session=onlineSessionVersion;unlockAudio();
   try{
-    tournamentError('');resetChampionSplash();await initFirebase();
+    tournamentError('');resetChampionSplash();await initFirebase();if(session!==onlineSessionVersion)return;
     const code=(document.querySelector('#tournamentJoinCode').value||'').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,5);
     if(code.length!==5)throw new Error('Enter the 5-character tournament code.');
-    const ref=mpDb.ref('tournaments/'+code),snap=await ref.once('value');
+    const ref=mpDb.ref('tournaments/'+code),snap=await ref.once('value');if(session!==onlineSessionVersion)return;
     if(!snap.exists())throw new Error("I couldn't find that tournament.");
     if((snap.val()||{}).status!=='waiting')throw new Error('That tournament has already started.');
     const existing=snap.child('players').val()||{};
     let mine=Object.keys(existing).find(c=>existing[c]===mpUid);
     if(!mine){
-      for(const color of TOURNAMENT_COLORS){
+      if(Object.values(existing).filter(Boolean).length>=TOURNAMENT_MAX_PLAYERS)throw new Error('That tournament is full (4 players maximum).');
+      for(const color of TOURNAMENT_COLORS.slice(0,TOURNAMENT_MAX_PLAYERS)){
         const claim=await ref.child('players/'+color).transaction(current=>current===null?mpUid:(current===mpUid?current:undefined));
+        if(session!==onlineSessionVersion)return;
         if(claim.committed&&claim.snapshot.val()===mpUid){mine=color;break}
       }
     }
-    if(!mine)throw new Error('That tournament lobby is full.');
+    if(!mine)throw new Error('That tournament is full (4 players maximum).');
     tournamentCodeValue=code;tournamentColor=mine;tournamentIsHost=false;listenTournament(ref);
     document.querySelector('#createdTournament').hidden=true;
     document.querySelector('#joinTournament').hidden=true;
     document.querySelector('#studentTournamentStatus').hidden=false;
     document.querySelector('#assignedColor').textContent=mine;
-  }catch(e){tournamentError(e.message||String(e))}
+  }catch(e){if(session===onlineSessionVersion)tournamentError(e.message||String(e))}
 }
 let triadGeneration=0,triadVisualTasks=0,triadCaptureTasks=0;
 const triadVisualWaits=new Map();
@@ -1110,7 +1128,7 @@ async function cpuMove(token=++cpuTurnToken){
   cpuClashRevealHold=true;apply(move.pos,card);turn=0;render();if(!await triadPause(90,generation))return;cpuClashRevealHold=false;playNextClash();await waitForClashes(generation);
  }finally{done();if(generation===triadGeneration){cpuClashRevealHold=false;busy=false;turn=0;render();}}
 }
-async function startNewGameConfirmed(){window.musicTriadExitAdvancedTutorial?.();window.musicTriadExitTutorial?.();stopMusic();stopEndCue();endSoundPlayed=false;if(isMp()&&mpRef){selected=null;const fb=Array(9).fill(null),fh=dealHands();await mpRef.child('game').set({board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false})}else reset();if(musicOn)startMusic()}
+async function startNewGameConfirmed(){const session=onlineSessionVersion;window.musicTriadExitAdvancedTutorial?.();window.musicTriadExitTutorial?.();stopMusic();stopEndCue();endSoundPlayed=false;if(isMp()&&mpRef){selected=null;const fb=Array(9).fill(null),fh=dealHands();await mpRef.child('game').set({board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false})}else reset();if(session===onlineSessionVersion&&musicOn)startMusic()}
 document.querySelector('#new').onclick=()=>{if(tournamentRef||tournamentGameContext)return;showExitConfirm('newgame',startNewGameConfirmed)};
 document.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.open).classList.add('open')));
 function closeModal(m){m.classList.remove('open')}
@@ -1158,18 +1176,63 @@ let exitConfirmAction=null;
 function setTournamentControls(){const n=document.querySelector('#new');if(n)n.classList.toggle('tournament-locked',!!(tournamentRef||tournamentGameContext))}
 function showExitConfirm(kind,action){exitConfirmAction=action;if(kind==='tournament'){exitConfirmTitle.textContent='FORFEIT TOURNAMENT?';exitConfirmMessage.textContent='Leaving now will forfeit your current tournament match. Do you want to forfeit?'}else if(kind==='newgame'){exitConfirmTitle.textContent='START A NEW GAME?';exitConfirmMessage.textContent='This will end the current game and start a new one.'}else{exitConfirmTitle.textContent='ARE YOU SURE?';exitConfirmMessage.textContent='Exiting now will end the game.'}exitConfirm.classList.add('show')}
 function hideExitConfirm(){exitConfirm.classList.remove('show');exitConfirmAction=null}
-function goHomeScreen(){cancelTriadAnimations();window.musicTriadExitAdvancedTutorial?.();window.musicTriadExitTutorial?.();stopMusic();stopEndCue();selected=null;busy=true;if(mpRef)mpRef.off();mpRef=null;mpRoom=null;mpSeat=null;gameMode='computer';setModeBadge();startScreen.classList.remove('hidden');closeModePanels();document.querySelector('#mpPanel').hidden=true;document.querySelector('#tourneyPanel').hidden=true;setTournamentControls();requestAnimationFrame(()=>{startScreen.scrollTop=0;window.scrollTo(0,0)})}
-async function forfeitTournamentMatch(){const ctx=tournamentGameContext;if(!ctx||!tournamentRef)returnToTournamentLobby();else{const winner=tournamentColor===ctx.a?ctx.b:ctx.a;const path=ctx.round==='final'?'bracket/final':'bracket/round1/'+ctx.index;try{await tournamentRef.child(path).child('winner').transaction(cur=>cur||winner);await advanceTournamentAfterResult()}catch(e){tournamentError(e.message||String(e))}returnToTournamentLobby()}setTournamentControls()}
-async function leavePvpForHome(){try{if(mpRef){await mpRef.child('game/finished').set(true);mpRef.off()}}catch(e){}goHomeScreen()}
+function goHomeScreen(){cancelTriadAnimations();leaveOnlineSession();window.musicTriadExitAdvancedTutorial?.();window.musicTriadExitTutorial?.();stopMusic();stopEndCue();selected=null;busy=true;if(mpRef)mpRef.off();mpRef=null;mpRoom=null;mpSeat=null;gameMode='computer';setModeBadge();startScreen.classList.remove('hidden');closeModePanels();document.querySelector('#mpPanel').hidden=true;document.querySelector('#tourneyPanel').hidden=true;setTournamentControls();requestAnimationFrame(()=>{startScreen.scrollTop=0;window.scrollTo(0,0)})}
+async function forfeitTournamentMatch(){
+  const ctx=tournamentGameContext,ref=tournamentRef,session=onlineSessionVersion;
+  if(!ctx||!ref){returnToTournamentLobby();return;}
+  const current=()=>session===onlineSessionVersion&&ref===tournamentRef&&ctx===tournamentGameContext;
+  const winner=tournamentColor===ctx.a?ctx.b:ctx.a,path=ctx.round==='final'?'bracket/final':'bracket/round1/'+ctx.index;
+  try{await ref.child(path).child('winner').transaction(cur=>cur||winner);if(!current())return;await advanceTournamentAfterResult(ref);}
+  catch(e){if(current())tournamentError(e.message||String(e));}
+  if(current())returnToTournamentLobby();setTournamentControls();
+}
+async function leavePvpForHome(){
+  const ref=mpRef,session=onlineSessionVersion;
+  try{if(ref){await ref.child('game/finished').set(true);ref.off();}}catch{}
+  if(session===onlineSessionVersion&&ref===mpRef)goHomeScreen();
+}
+
 function homeRequested(){if(tournamentGameContext){showExitConfirm('tournament',forfeitTournamentMatch);return}if(isMp()&&mpRef){showExitConfirm('pvp',leavePvpForHome);return}if(tournamentRef){showExitConfirm('tournament',async()=>{goHomeScreen()});return}showExitConfirm('computer',goHomeScreen)}
 document.querySelector('#homeBtn').addEventListener('click',homeRequested);
 document.querySelector('#exitConfirmNo').addEventListener('click',hideExitConfirm);
 document.querySelector('#exitConfirmYes').addEventListener('click',async()=>{const a=exitConfirmAction;hideExitConfirm();if(a)await a()});
 const startScreen=document.querySelector('#startScreen');
-function enterComputer(){if(window.musicTriadExitAdvancedTutorial)window.musicTriadExitAdvancedTutorial();if(window.musicTriadExitTutorial)window.musicTriadExitTutorial();unlockAudio();gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;setModeBadge();startScreen.classList.add('hidden');startMusic();reset()}
-async function createClassmateRoom(){unlockAudio();try{mpError('');await initFirebase();gameMode='classmate';mpSeat=0;for(let tries=0;tries<8;tries++){const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),snap=await lobby.once('value');if(snap.exists())continue;const ref=mpDb.ref('rooms/'+code);mpRoom=code;mpRef=ref;setModeBadge();const fb=Array(9).fill(null),fh=dealHands();await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,game:{board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false}});await lobby.set(mpUid);ref.child('p1Online').onDisconnect().set(false);document.querySelector('#createdRoom').hidden=false;document.querySelector('#joinRoom').hidden=true;document.querySelector('#roomCode').textContent=code;listenRoom();return}throw new Error("Couldn't create a room. Try again.")}catch(e){gameMode='computer';mpError(e.message);setModeBadge()}}
-async function joinClassmateRoom(){unlockAudio();try{mpError('');await initFirebase();const code=(document.querySelector('#joinCode').value||'').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,4);if(code.length!==4)throw new Error('Enter the 4-character game code.');const lobbySnap=await mpDb.ref('lobbies/'+code).once('value');if(!lobbySnap.exists())throw new Error("I couldn't find that game.");const ref=mpDb.ref('rooms/'+code);gameMode='classmate';mpRoom=code;mpSeat=1;mpRef=ref;setModeBadge();const claim=await ref.child('p2').transaction(current=>{if(current===null)return mpUid;if(current===mpUid)return current;return});if(!claim.committed||claim.snapshot.val()!==mpUid)throw new Error('That game already has two players.');await ref.child('p2Online').set(true);ref.child('p2Online').onDisconnect().set(false);listenRoom()}catch(e){gameMode='computer';mpError(e.message);setModeBadge()}}
-function listenRoom(){if(!mpRef)return;mpRef.on('value',snap=>{const room=snap.val();if(!room){mpError('That room no longer exists.');return}if(mpSeat===0&&!room.p2){document.querySelector('#roomWait').textContent='Waiting for your classmate…';return}if(room.game){const old=board?clone(board):Array(9).fill(null),s=stateFromWire(room.game);board=s.board;hands=s.hands;turn=s.turn;busy=false;selected=null;if(!board.some(Boolean)){cancelTriadAnimations();window.codaTriadReset();endSoundPlayed=false;}startScreen.classList.add('hidden');setModeBadge();if(!endSoundPlayed)startMusic();const changed=[];board.forEach((c,i)=>{if(c&&old[i]&&c.owner!==old[i].owner)changed.push(i)});const placed=board.findIndex((c,i)=>c&&!old[i]);const mpClashes=placed>=0?clashesForPlacement(placed,board[placed],old):[];if(mpClashes.length)queueRhythmClashes(mpClashes);if(changed.length)queueCaptureFX(changed);busy=clashesActive();render();const generation=triadGeneration;if(busy)waitForClashes(generation).then(active=>{if(active){busy=false;render();}})}})}
+function enterComputer(){leaveOnlineSession();if(window.musicTriadExitAdvancedTutorial)window.musicTriadExitAdvancedTutorial();if(window.musicTriadExitTutorial)window.musicTriadExitTutorial();unlockAudio();gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;setModeBadge();startScreen.classList.add('hidden');startMusic();reset()}
+async function createClassmateRoom(){
+  leaveOnlineSession();const session=onlineSessionVersion;unlockAudio();
+  try{
+    mpError('');await initFirebase();if(session!==onlineSessionVersion)return;
+    gameMode='classmate';mpSeat=0;
+    for(let tries=0;tries<8;tries++){
+      const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),snap=await lobby.once('value');
+      if(session!==onlineSessionVersion)return;if(snap.exists())continue;
+      const ref=mpDb.ref('rooms/'+code);mpRoom=code;mpRef=ref;setModeBadge();
+      await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,game:{board:boardToWire(Array(9).fill(null)),hands:clone(dealHands()),turn:0,moves:0,finished:false}});
+      if(session!==onlineSessionVersion)return;await lobby.set(mpUid);if(session!==onlineSessionVersion)return;
+      ref.child('p1Online').onDisconnect().set(false);
+      document.querySelector('#createdRoom').hidden=false;document.querySelector('#joinRoom').hidden=true;document.querySelector('#roomCode').textContent=code;listenRoom();return;
+    }
+    throw new Error("Couldn't create a room. Try again.");
+  }catch(e){if(session!==onlineSessionVersion)return;if(mpRef)mpRef.off();mpRef=null;mpRoom=null;mpSeat=null;gameMode='computer';mpError(e.message);setModeBadge();}
+}
+async function joinClassmateRoom(){
+  leaveOnlineSession();const session=onlineSessionVersion;unlockAudio();
+  try{
+    mpError('');await initFirebase();if(session!==onlineSessionVersion)return;
+    const code=(document.querySelector('#joinCode').value||'').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,4);
+    if(code.length!==4)throw new Error('Enter the 4-character game code.');
+    const lobbySnap=await mpDb.ref('lobbies/'+code).once('value');if(session!==onlineSessionVersion)return;
+    if(!lobbySnap.exists())throw new Error("I couldn't find that game.");
+    const ref=mpDb.ref('rooms/'+code);gameMode='classmate';mpRoom=code;mpSeat=1;mpRef=ref;setModeBadge();
+    const claim=await ref.child('p2').transaction(current=>current===null||current===mpUid?mpUid:undefined);
+    if(session!==onlineSessionVersion)return;
+    if(!claim.committed||claim.snapshot.val()!==mpUid)throw new Error('That game already has two players.');
+    await ref.child('p2Online').set(true);if(session!==onlineSessionVersion)return;
+    ref.child('p2Online').onDisconnect().set(false);listenRoom();
+  }catch(e){if(session!==onlineSessionVersion)return;if(mpRef)mpRef.off();mpRef=null;mpRoom=null;mpSeat=null;gameMode='computer';mpError(e.message);setModeBadge();}
+}
+
+function listenRoom(){if(!mpRef)return;const ref=mpRef;ref.on('value',snap=>{if(ref!==mpRef)return;const room=snap.val();if(!room){mpError('That room no longer exists.');return}if(mpSeat===0&&!room.p2){document.querySelector('#roomWait').textContent='Waiting for your classmate…';return}if(room.game){const old=board?clone(board):Array(9).fill(null),s=stateFromWire(room.game);board=s.board;hands=s.hands;turn=s.turn;busy=false;selected=null;if(!board.some(Boolean)){cancelTriadAnimations();window.codaTriadReset();endSoundPlayed=false;}startScreen.classList.add('hidden');setModeBadge();if(!endSoundPlayed)startMusic();const changed=[];board.forEach((c,i)=>{if(c&&old[i]&&c.owner!==old[i].owner)changed.push(i)});const placed=board.findIndex((c,i)=>c&&!old[i]);const mpClashes=placed>=0?clashesForPlacement(placed,board[placed],old):[];if(mpClashes.length)queueRhythmClashes(mpClashes);if(changed.length)queueCaptureFX(changed);busy=clashesActive();render();const generation=triadGeneration;if(busy)waitForClashes(generation).then(active=>{if(active){busy=false;render();}})}})}
 document.querySelector('#vsComputer').addEventListener('click',enterComputer);
 document.querySelector('#vsClassmate').addEventListener('click',()=>{if(window.CodaGamePrivacy.enabled)return;unlockAudio();closeModePanels('mpPanel');document.querySelector('#mpPanel').hidden=false;mpError('')});
 document.querySelector('#viewFinalBracket').addEventListener('click',()=>{hideChampionSplash();returnToTournamentLobby()});
@@ -1254,10 +1317,10 @@ let tutorialActive=false,tutorialLesson=-1,tutorialTargetCard=0,tutorialTargetSq
    if(!tutorialActive)return originalHumanPlace(i);if(i!==tutorialTargetSquare||selected!==tutorialTargetCard)return;
    const generation=triadGeneration,L=lessons[tutorialLesson],c=hands[0].splice(selected,1)[0];selected=null;busy=true;apply(i,c);originalRender();if(!await waitForClashes(generation))return;if(!await triadPause(100,generation))return;busy=false;tutorialAwaiting=true;showDialogue('NICE!',L.after,tutorialLesson===lessons.length-1?'FINISH':'NEXT');
  };
- function startTutorial(){cancelTriadAnimations();unlockAudio();tutorialActive=true;
+ function startTutorial(){leaveOnlineSession();cancelTriadAnimations();unlockAudio();tutorialActive=true;
  const _td=document.getElementById('tutorialDialogue');if(_td)_td.style.display='';
  const _tt=document.getElementById('tutorialToast');if(_tt)_tt.style.display='';gameMode='computer';mpRoom=null;mpSeat=null;tournamentGameContext=null;document.body.classList.add('tutorial-active');startScreen.classList.add('hidden');startMusic();showDialogue('WELCOME TO MUSIC TRIAD!','You’ll learn by playing a short, scripted game. I’ll explain one rule, then you’ll perform it on the board.<br><br><b>The glowing card and square show you what to try.</b>','BEGIN');tutorialLesson=-1;tutorialAwaiting=false}
- function finishTutorial(){hideDialogue();const toast=document.querySelector('#tutorialToast');toast.classList.add('show');setTimeout(()=>{toast.classList.remove('show');tutorialActive=false;document.body.classList.remove('tutorial-active');goHomeScreen()},2200)}
+ function finishTutorial(){hideDialogue();const toast=document.querySelector('#tutorialToast');toast.classList.add('show');triadPause(2200,triadGeneration,true).then(active=>{if(!active)return;toast.classList.remove('show');tutorialActive=false;document.body.classList.remove('tutorial-active');goHomeScreen()})}
  document.querySelector('#tutorialNext').addEventListener('click',()=>{
    if(tutorialLesson<0){hideDialogue();setupLesson(0);return}
    if(!tutorialAwaiting){hideDialogue();decorateTutorial();return}
@@ -1582,7 +1645,7 @@ cpuMove=async function(){
  async place(i){if(!advTutorialHarness||selected===null||busy)return false;const c=hands[0][selected];if(!c||board[i])return false;const generation=triadGeneration,before=board.map(triadCardCopy);hands[0].splice(selected,1);selected=null;busy=true;applyAdvanced(i,c);render();const active=c.special==='mordent'?await animateTurnFX(i,generation):await animateAdvancedClashes(i,c,before,generation);if(!active||!await waitForClashes(generation))return false;busy=false;render();return true},
  async action(i){if(!advTutorialHarness||selected===null||busy)return false;const c=hands[0][selected];if(!c||!['subito','tacet'].includes(c.special))return false;const generation=triadGeneration,targets=c.special==='tacet'?tacetTargets(i,board):[i];if(!useAction(0,selected,c,i))return false;selected=null;busy=true;render();const active=c.special==='tacet'?await animateTacetFX(i,targets,generation):await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',TRIAD_CLASH_TIMING.special,generation);if(!active)return false;busy=false;render();return true}
  };
- function startAdvanced(){if(window.musicTriadExitAdvancedTutorial)window.musicTriadExitAdvancedTutorial();if(window.musicTriadExitTutorial)window.musicTriadExitTutorial();unlockAudio();advancedMode=true;document.body.classList.add('advanced-mode');gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;startScreen.classList.add('hidden');startMusic();reset()}
+ function startAdvanced(){leaveOnlineSession();if(window.musicTriadExitAdvancedTutorial)window.musicTriadExitAdvancedTutorial();if(window.musicTriadExitTutorial)window.musicTriadExitTutorial();unlockAudio();advancedMode=true;document.body.classList.add('advanced-mode');gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;startScreen.classList.add('hidden');startMusic();reset()}
  /* Advanced mode is selected by the Home toggle; normal game buttons launch it. */
 
 document.querySelector('#vsComputer').addEventListener('click',(e)=>{
@@ -1624,10 +1687,10 @@ function lock(v){if(home){home.disabled=v;home.classList.toggle('adv-tut-locked'
 function marks(){document.querySelectorAll('.adv-real-target').forEach(e=>e.classList.remove('adv-real-target'));if(!active||n<0)return;const p=document.querySelector('#hand .pick'),s=document.querySelectorAll('#board .slot')[L[n].q];if(p)p.classList.add('adv-real-target');if(s)s.classList.add('adv-real-target');document.getElementById('modeBadge').textContent='🎼 ADVANCED MODE • TUTORIAL';document.getElementById('score').textContent=`Lesson ${n+1} of ${L.length}`;document.getElementById('status').textContent='Use the glowing card and target.'}
 function setup(i){n=i;done=false;window.musicTriadAdvancedTutorial.setup(L[n].b,L[n].a);marks();say(L[n].h,L[n].c,'TRY IT')}
 function clean(){active=false;n=-1;done=false;window.musicTriadAdvancedTutorial?.stop();document.querySelectorAll('.adv-real-target').forEach(e=>e.classList.remove('adv-real-target'));document.body.classList.remove('advanced-tutorial-active');hide();const t=document.getElementById('advTutorialToast');t.classList.remove('show');t.style.display='none'}window.musicTriadExitAdvancedTutorial=clean;
-function start(){if(!window.musicTriadAdvancedSelected?.())return;window.musicTriadExitTutorial?.();clean();active=true;window.musicTriadAdvancedTutorial.begin();document.body.classList.add('advanced-tutorial-active');startScreen.classList.add('hidden');startMusic();say('ADVANCED MODE','You already know how to play Music Triad. This tutorial skips the basics and teaches only what is <b>new in Advanced Mode</b>.','BEGIN')}
+function start(){if(!window.musicTriadAdvancedSelected?.())return;leaveOnlineSession();window.musicTriadExitTutorial?.();clean();active=true;window.musicTriadAdvancedTutorial.begin();document.body.classList.add('advanced-tutorial-active');startScreen.classList.add('hidden');startMusic();say('ADVANCED MODE','You already know how to play Music Triad. This tutorial skips the basics and teaches only what is <b>new in Advanced Mode</b>.','BEGIN')}
 document.getElementById('hand').addEventListener('click',e=>{if(!active||done||n<0)return;const p=e.target.closest('.pick');if(!p)return;if([...document.querySelectorAll('#hand .pick')].indexOf(p)!==0)return;e.preventDefault();e.stopImmediatePropagation();window.musicTriadAdvancedTutorial.select(0);marks()},true);
 document.getElementById('board').addEventListener('click',async e=>{if(!active||done||n<0)return;const s=e.target.closest('.slot');if(!s)return;const i=[...document.querySelectorAll('#board .slot')].indexOf(s);if(i!==L[n].q)return;e.preventDefault();e.stopImmediatePropagation();const ok=L[n].x?await window.musicTriadAdvancedTutorial.action(i):await window.musicTriadAdvancedTutorial.place(i);if(ok){done=true;marks();say('NICE!',L[n].z,'NEXT')}},true);
-N.addEventListener('click',()=>{if(n<0){hide();setup(0);return}if(!done){hide();marks();return}if(n<L.length-1){hide();setup(n+1);return}hide();const t=document.getElementById('advTutorialToast');t.style.display='';t.classList.add('show');setTimeout(()=>{clean();goHomeScreen()},1900)});
+N.addEventListener('click',()=>{if(n<0){hide();setup(0);return}if(!done){hide();marks();return}if(n<L.length-1){hide();setup(n+1);return}hide();const t=document.getElementById('advTutorialToast');t.style.display='';t.classList.add('show');triadPause(1900,triadGeneration,true).then(active=>{if(active){clean();goHomeScreen()}})});
 document.getElementById('tutorialMode')?.addEventListener('click',e=>{if(window.musicTriadAdvancedSelected?.()){e.preventDefault();e.stopImmediatePropagation();start()}},true)})();
 </script>
 

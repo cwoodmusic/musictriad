@@ -6,7 +6,7 @@
  if(root?.document){root.CodaTriadResults=api;api.install(root);}
 })(typeof window==='undefined'?null:window,function(){
  'use strict';
- const ORIGINS=Object.freeze(['https://cwoodmusic.github.io','https://music-arcade.aquajelly16.chatgpt.site','https://www.coda-arcade.com']);
+ const ORIGINS=Object.freeze(['https://cwoodmusic.github.io','https://music-arcade.aquajelly16.chatgpt.site','https://www.coda-aracde.com']);
  const GRADES=Object.freeze(['easy','normal','hard']);
  const grade=value=>GRADES.includes(String(value).toLowerCase())?String(value).toLowerCase():'normal';
  const weaker=(a,b)=>GRADES[Math.min(GRADES.indexOf(grade(a)),GRADES.indexOf(grade(b)))];

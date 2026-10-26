@@ -212,12 +212,12 @@ test('standalone Music Triad does not contact a parent or require external servi
 });
 
 test('the custom arcade domain and existing origins retain an exact trusted-parent handshake',()=>{
- assert.deepEqual(ORIGINS,['https://cwoodmusic.github.io','https://music-arcade.aquajelly16.chatgpt.site','https://www.coda-arcade.com']);
+ assert.deepEqual(ORIGINS,['https://cwoodmusic.github.io','https://music-arcade.aquajelly16.chatgpt.site','https://www.coda-aracde.com']);
  for(const origin of ORIGINS){
   const env=windowFixture(),bridge=createMessageBridge(env.win);
   bridge.report('domain-match',{mode:'computer',won:true,score:5,captures:1,comeback:false});
   const good={source:env.parent,origin,data:{coda:1,type:'init',game:'triad',token:'domain-session'}};
-  for(const untrusted of ['http://www.coda-arcade.com','https://www.coda-arcade.com.evil.invalid','https://coda-arcade.com','https://www.coda-arcade.com:444','https://cwoodmusic.github.io.evil.invalid'])env.receive({...good,origin:untrusted});
+  for(const untrusted of ['https://www.coda-arcade.com','https://coda-arcade.com','http://www.coda-aracde.com','https://www.coda-aracde.com.evil.invalid','https://coda-aracde.com','https://www.coda-aracde.com:444','https://cwoodmusic.github.io.evil.invalid'])env.receive({...good,origin:untrusted});
   env.receive({...good,source:{}});env.receive({...good,data:{...good.data,game:'pitch'}});
   env.receive({...good,data:{...good.data,token:''}});env.receive({...good,data:{...good.data,token:'x'.repeat(101)}});
   assert.equal(bridge.getState().connected,false);assert.equal(env.messages.filter(m=>m.data.type==='result').length,0);

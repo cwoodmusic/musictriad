@@ -63,3 +63,24 @@ older oversized lobbies must be replaced before starting. Leaving an online
 session detaches its listeners and cancels pending returns, so delayed snapshots,
 startup requests, or tutorial completion timers cannot replace a later match.
 Tournament labels are rendered as text, including values received from Firebase.
+
+
+## Advanced learning tools
+
+The Advanced tutorial has 20 short lessons using the real move engine. It covers
+touching sides, ties, notes/rests, dots, beamed groups, game meter powers, all six
+special cards, drawing, tied matches and online rules. The lesson picker allows
+replay, and Back, Home and Exit remain available during animations. Tutorials
+do not earn scores, achievements or arcade rewards.
+
+The rebuilt Cheat Sheet opens in the selected game mode. Its guide-only mode
+switch never changes the match. Sections show exact values, meter calculations,
+special targets and worked touching-card examples using the game’s notation.
+Advanced Rules opens this same guide. The meter multipliers are game powers;
+6/8 does not universally double written note durations in real music.
+
+```sh
+node --test tests/advanced-reference.test.cjs
+PYTHONDONTWRITEBYTECODE=1 python3 tests/advanced-reference-browser.py
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_advanced_course.py'
+```

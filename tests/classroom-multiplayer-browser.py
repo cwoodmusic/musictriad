@@ -83,8 +83,11 @@ class ClassroomMultiplayerTests(TriadBrowserCase):
             self.assertTrue(self.page.locator(panel).is_visible())
             self.assert_no_cloud()
         self.page.locator('label.mode-toggle').click()
-        for selector in ['#vsClassmate','#tournamentMode']:
-            self.assertTrue(self.page.locator(selector).is_disabled())
+        for selector,panel in [('#vsClassmate','#mpPanel'),('#tournamentMode','#tourneyPanel')]:
+            self.assertFalse(self.page.locator(selector).is_disabled())
+            self.page.locator(selector).click()
+            self.assertTrue(self.page.locator(panel).is_visible())
+            self.assert_no_cloud()
         self.start(self.page.main_frame,advanced=True)
         self.assertEqual(self.page.locator('#board .slot').count(),16)
         self.assert_no_cloud()
@@ -124,6 +127,7 @@ class ClassroomMultiplayerTests(TriadBrowserCase):
         self.assertEqual(len(code),5);self.assert_private_connection()
         record=self.page.evaluate('__online.data.tournaments['+repr(code)+']')
         self.assertEqual(set(record),{'host','status','created','players'})
+        self.assertEqual(record.get('rules','simple'),'simple')
         self.page.evaluate("goHomeScreen();__online.data.tournaments.ABCDE={host:'host',status:'waiting',players:{Red:'other'}}")
         self.page.locator('#tournamentMode').click();self.page.locator('#showTournamentJoin').click()
         self.page.locator('#tournamentJoinCode').fill('ABCDE');self.page.locator('#joinTournamentNow').click()

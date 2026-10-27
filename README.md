@@ -10,7 +10,7 @@ The game is static HTML/CSS/JavaScript and needs no package installation or buil
 python3 -m http.server 8004 --bind 127.0.0.1
 ```
 
-Single-player games and their arcade reward reports need no credentials. Multiplayer and tournaments retain their existing Firebase configuration; this update does not change Firebase projects, rules, or stored data.
+Single-player games and their arcade reward reports need no credentials. Multiplayer and tournaments reuse the existing Firebase project and room paths. New Advanced records add their rules, round number and last move; Simple and older records keep their existing format.
 
 ## Arcade rewards
 
@@ -37,6 +37,7 @@ python3 tests/animation-audio-browser.py
 python3 tests/advanced-tiebreak-browser.py
 python3 tests/audit-browser.py
 python3 tests/classroom-multiplayer-browser.py
+python3 tests/advanced-online-browser.py
 ```
 
 ## Publishing
@@ -45,7 +46,16 @@ GitHub Pages serves the `main` branch at `https://cwoodmusic.github.io/musictria
 
 ## Classroom privacy
 
-Launch with `?classroom=1` (or embed in Coda with classroom privacy on) to keep progress in the private parent profile. Same-origin classroom frames inherit their parent's scoped progress store before reading local progress. Solo play and browsing the multiplayer/tournament panels do not load Firebase or create a game account. Choosing **Create** or **Join** connects to the existing room service with an anonymous, memory-only game session; no name, email, or Profile Pass is sent. Room codes and tournament colors identify players. Simple mode offers classmate games and 2–4-player tournaments; Advanced online play remains unavailable. Single-player Simple and Advanced games, tied-board continuation, audio, and arcade rewards remain available. Standalone play retains its existing online behavior.
+Launch with `?classroom=1` (or embed in Coda with classroom privacy on) to keep progress in the private parent profile. Same-origin classroom frames inherit their parent's scoped progress store before reading local progress. Solo play and browsing the multiplayer/tournament panels do not load Firebase or create a game account. Choosing **Create** or **Join** connects to the existing room service with an anonymous, memory-only game session; no name, email, or Profile Pass is sent. Room codes and tournament colors identify players. Both Simple and Advanced modes offer classmate games and 2–4-player tournaments. Single-player games, tied-board continuation, audio, and arcade rewards remain available. Standalone play retains its existing online behavior.
+
+Choose Simple or Advanced before creating a game or tournament. Classmate games
+use a four-character code; tournaments use a five-character code. Joining players
+automatically use the creator's rules. Advanced matches use the 4×4 board, musical
+meter values, draw-on-turn hands and special cards. A tied Advanced board starts
+a fresh round in the same match, alternating the starting player, until there is
+a winner. Tournament rounds inherit the same rules through the championship.
+Rules cannot be switched while an online session is open; return Home to start
+another session. Developer unlock-test mode still uses local play only.
 
 Tournament lobbies support 2–4 players, matching the existing first-round and
 championship database paths. Full lobbies cannot claim a fifth color slot;

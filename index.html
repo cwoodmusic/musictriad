@@ -659,14 +659,32 @@ const pool=['sn','en','qn','ee','ssss','hn','wn','er','qr','hr','wr'];function r
 function dealHands(){let h=[[card(0),card(0),card(0),card(0),card(0)],[card(1),card(1),card(1),card(1),card(1)]],slots=[];for(let o=0;o<2;o++)for(let i=0;i<5;i++)slots.push([o,i]);let s=rand(slots),roll=Math.random();if(roll<.1)h[s[0]][s[1]]={owner:s[0],cond:true,e:[]};else if(roll<.45)h[s[0]][s[1]]=card(s[0],true);return h}
 let board, hands, selected, turn, busy, starter=0, endSoundPlayed=false;
 let gameMode='computer',mpRoom=null,mpSeat=null,mpDb=null,mpRef=null,mpUid=null,onlineSessionVersion=0;
+let onlineRules='simple',tournamentRules='simple',mpMoves=0,mpRound=1,mpFinished=false,mpRenderedRoom=null,mpSnapshotKey='';
 const FIREBASE_CONFIG={apiKey:"AIzaSyBc742bvSjZ3VIrJlH8WZ1UlGGCKFFENho",authDomain:"music-triad.firebaseapp.com",databaseURL:"https://music-triad-default-rtdb.firebaseio.com",projectId:"music-triad",storageBucket:"music-triad.firebasestorage.app",messagingSenderId:"276316405918",appId:"1:276316405918:web:d09c11c2422cf6bf95bb8f"};
 function isMp(){return gameMode==='classmate'}
 function mpError(msg){const e=document.querySelector('#mpError');if(e)e.textContent=msg||''}
 function roomCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:4},()=>a[Math.floor(Math.random()*a.length)]).join('')}
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function boardToWire(b){return b.map(c=>c?clone(c):{empty:true})}
-function boardFromWire(b){const a=Array.isArray(b)?b:Object.keys(b||{}).sort((x,y)=>Number(x)-Number(y)).map(k=>b[k]);return Array.from({length:9},(_,i)=>{const c=a&&a[i];return !c||c.empty?null:clone(c)})}
-function stateFromWire(s){return{board:boardFromWire(s&&s.board),hands:clone((s&&s.hands)||[[],[]]),turn:Number((s&&s.turn)??0),finished:!!(s&&s.finished)}}
+function cardFromWire(value){
+ if(!value||typeof value!=='object'||![0,1].includes(value.owner))return null;
+ const card={owner:value.owner};
+ if(value.special!==undefined){if(!['mmrest','qfermata','subito','tacet','mordent','conductor'].includes(value.special))return null;return {...card,special:value.special,e:[]};}
+ if(value.cond===true)return {...card,cond:true,e:[]};
+ if(!Array.isArray(value.e)||value.e.length!==4||!value.e.every(key=>typeof key==='string'&&Object.prototype.hasOwnProperty.call(S,key)))return null;
+ card.e=value.e.slice();if(['4/4','2/2','6/8'].includes(value.meter))card.meter=value.meter;
+ if(Array.isArray(value.art))card.art=Array.from({length:4},(_,i)=>['staccato','legato'].includes(value.art[i])?value.art[i]:null);
+ return card;
+}
+function selectedOnlineRules(){return window.musicTriadAdvancedSelected?.()?'advanced':'simple'}
+function adoptOnlineRules(rules){onlineRules=rules==='advanced'?'advanced':'simple';window.musicTriadAdvancedOnline?.setRules(onlineRules);}
+function gameForRules(rules){return rules==='advanced'?window.musicTriadAdvancedOnline.createGame():{board:boardToWire(Array(9).fill(null)),hands:clone(dealHands()),turn:0,moves:0,finished:false}}
+function boardFromWire(b,rules='simple'){const a=Array.isArray(b)?b:Object.keys(b||{}).sort((x,y)=>Number(x)-Number(y)).map(k=>b[k]);return Array.from({length:rules==='advanced'?16:9},(_,i)=>cardFromWire(a&&a[i]))}
+function stateFromWire(s,rules=s?.rules){
+ rules=rules==='advanced'?'advanced':'simple';const wire=s?.hands||{},decodedHands=[0,1].map(seat=>{const hand=wire[seat]||[];return (Array.isArray(hand)?hand:Object.keys(hand).sort((a,b)=>Number(a)-Number(b)).map(key=>hand[key])).map(cardFromWire).filter(Boolean);});
+ const rawMove=s?.lastMove,moveCard=cardFromWire(rawMove?.card),lastMove=rawMove&&moveCard&&[0,1].includes(rawMove.seat)&&Number.isInteger(rawMove.index)&&rawMove.index>=0&&rawMove.index<16&&['place','subito','tacet'].includes(rawMove.kind)?{seat:rawMove.seat,index:rawMove.index,card:moveCard,kind:rawMove.kind,sequence:Number(rawMove.sequence)||0}:null;
+ return {rules,board:boardFromWire(s&&s.board,rules),hands:decodedHands,turn:Number((s&&s.turn)??0),moves:Number(s?.moves)||0,round:Number(s?.round)||1,finished:!!(s&&s.finished),lastMove};
+}
 let firebaseInitialization=null;
 function initFirebase(){
  if(firebaseInitialization)return firebaseInitialization;
@@ -682,7 +700,7 @@ function initFirebase(){
  })().catch(error=>{firebaseInitialization=null;throw error;});
  return firebaseInitialization;
 }
-function setModeBadge(){const b=document.querySelector('#modeBadge'),lab=document.querySelector('#level').closest('label');if(isMp()){b.textContent=mpRoom?`VS CLASSMATE • ROOM ${mpRoom}`:'VS CLASSMATE';lab.style.display='none'}else{b.textContent='VS COMPUTER';lab.style.display=''}}
+function setModeBadge(){const b=document.querySelector('#modeBadge'),lab=document.querySelector('#level').closest('label');if(isMp()){b.textContent=(onlineRules==='advanced'?'🎼 ADVANCED • ':'')+(mpRoom?`VS CLASSMATE • ROOM ${mpRoom}`:'VS CLASSMATE');lab.style.display='none'}else{b.textContent='VS COMPUTER';lab.style.display=''}window.musicTriadAdvancedOnline?.sync();}
 
 
 const TOURNAMENT_COLORS=['Red','Blue','Orange','Green','Cyan','Brown','Purple','Grey','Pink','Yellow','Teal','Lime','Navy','Maroon','Gold','Silver'];
@@ -747,8 +765,7 @@ async function provisionTournamentRoom(match){
       const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),ls=await lobby.once('value');if(!current())return;
       if(ls.exists())continue;
       const ref=mpDb.ref('rooms/'+code);
-      const fb=Array(9).fill(null),fh=dealHands();
-      await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,game:{board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false}});
+      await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,...(tournamentRules==='advanced'?{rules:'advanced'}:{}),game:gameForRules(tournamentRules)});
       await lobby.set(mpUid);if(!current()){await ref.remove();await lobby.remove();return;}
       ref.child('p1Online').onDisconnect().set(false);
       const matchPath=match.round==='final'?'bracket/final':'bracket/round1/'+match.index;
@@ -868,6 +885,7 @@ function leaveOnlineSession(){
   onlineSessionVersion++;tournamentProvisioning=false;cancelTournamentReturn();
   if(mpRef)mpRef.off();if(tournamentRef)tournamentRef.off();
   mpRef=null;mpRoom=null;mpSeat=null;tournamentRef=null;tournamentCodeValue='';tournamentColor='';tournamentIsHost=false;tournamentMatch=null;tournamentGameContext=null;tournamentReportedRoom='';
+  mpRenderedRoom=null;mpSnapshotKey='';mpMoves=0;mpRound=1;mpFinished=false;tournamentRules='simple';window.musicTriadAdvancedOnline?.sync();
   resetChampionSplash();setTournamentControls();
 }
 
@@ -876,7 +894,7 @@ async function reportTournamentResult(counts){
   const ctx=tournamentGameContext,ref=tournamentRef,room=mpRoom,session=onlineSessionVersion;
   const current=()=>session===onlineSessionVersion&&ref===tournamentRef&&room===mpRoom&&ctx===tournamentGameContext;
   if(!ctx||!ref||!room||tournamentReportedRoom===room)return;
-  if(!board.every(Boolean))return;
+  if(onlineRules==='advanced'?!mpFinished||counts[0]===counts[1]:!board.every(Boolean))return;
   const winnerSeat=counts[0]>counts[1]?0:1;
   const winner=winnerSeat===0?ctx.a:ctx.b;
   const path=ctx.round==='final'?'bracket/final':'bracket/round1/'+ctx.index;
@@ -925,6 +943,8 @@ function listenTournament(ref){
     if(ref!==tournamentRef)return;
     const t=snap.val();
     if(!t){tournamentError('That tournament no longer exists.');return}
+    tournamentRules=t.rules==='advanced'?'advanced':'simple';adoptOnlineRules(tournamentRules);
+    document.querySelector('#tourneyPanel > strong').textContent=(tournamentRules==='advanced'?'Advanced ':'')+'Tournament • 2–4 Players';
     renderTournamentRoster(t.players,'tournamentRoster');
     renderTournamentRoster(t.players,'studentTournamentRoster');
     renderTournamentBracket(t.bracket);
@@ -955,13 +975,13 @@ async function startTournamentBracket(){
   }catch(e){tournamentError(e.message||String(e))}
 }
 async function createTournamentLobby(){
-  leaveOnlineSession();const session=onlineSessionVersion;unlockAudio();
+  const rules=selectedOnlineRules();leaveOnlineSession();tournamentRules=rules;const session=onlineSessionVersion;unlockAudio();
   try{
     tournamentError('');resetChampionSplash();await initFirebase();if(session!==onlineSessionVersion)return;
     for(let tries=0;tries<10;tries++){
       const code=tournamentCodeGen(),ref=mpDb.ref('tournaments/'+code),snap=await ref.once('value');if(session!==onlineSessionVersion)return;
       if(snap.exists())continue;
-      await ref.set({host:mpUid,status:'waiting',created:firebase.database.ServerValue.TIMESTAMP,players:{}});if(session!==onlineSessionVersion)return;
+      await ref.set({host:mpUid,status:'waiting',created:firebase.database.ServerValue.TIMESTAMP,players:{},...(rules==='advanced'?{rules:'advanced'}:{})});if(session!==onlineSessionVersion)return;
       tournamentCodeValue=code;tournamentColor='';tournamentIsHost=true;listenTournament(ref);
       document.querySelector('#createdTournament').hidden=false;
       document.querySelector('#joinTournament').hidden=true;
@@ -1142,7 +1162,7 @@ async function cpuMove(token=++cpuTurnToken){
   cpuClashRevealHold=true;apply(move.pos,card);turn=0;render();if(!await triadPause(90,generation))return;cpuClashRevealHold=false;playNextClash();await waitForClashes(generation);
  }finally{done();if(generation===triadGeneration){cpuClashRevealHold=false;busy=false;turn=0;render();}}
 }
-async function startNewGameConfirmed(){const session=onlineSessionVersion;window.musicTriadExitAdvancedTutorial?.();window.musicTriadExitTutorial?.();stopMusic();stopEndCue();endSoundPlayed=false;if(isMp()&&mpRef){selected=null;const fb=Array(9).fill(null),fh=dealHands();await mpRef.child('game').set({board:boardToWire(fb),hands:clone(fh),turn:0,moves:0,finished:false})}else reset();if(session===onlineSessionVersion&&musicOn)startMusic()}
+async function startNewGameConfirmed(){const session=onlineSessionVersion;window.musicTriadExitAdvancedTutorial?.();window.musicTriadExitTutorial?.();stopMusic();stopEndCue();endSoundPlayed=false;if(isMp()&&mpRef){selected=null;await mpRef.child('game').set(gameForRules(onlineRules))}else reset();if(session===onlineSessionVersion&&musicOn)startMusic()}
 document.querySelector('#new').onclick=()=>{if(tournamentRef||tournamentGameContext)return;showExitConfirm('newgame',startNewGameConfirmed)};
 document.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.open).classList.add('open')));
 function closeModal(m){m.classList.remove('open')}
@@ -1213,7 +1233,7 @@ document.querySelector('#exitConfirmYes').addEventListener('click',async()=>{con
 const startScreen=document.querySelector('#startScreen');
 function enterComputer(){leaveOnlineSession();if(window.musicTriadExitAdvancedTutorial)window.musicTriadExitAdvancedTutorial();if(window.musicTriadExitTutorial)window.musicTriadExitTutorial();unlockAudio();gameMode='computer';mpRoom=null;mpSeat=null;selected=null;busy=false;setModeBadge();startScreen.classList.add('hidden');startMusic();reset()}
 async function createClassmateRoom(){
-  leaveOnlineSession();const session=onlineSessionVersion;unlockAudio();
+  const rules=selectedOnlineRules();leaveOnlineSession();adoptOnlineRules(rules);const session=onlineSessionVersion;unlockAudio();
   try{
     mpError('');await initFirebase();if(session!==onlineSessionVersion)return;
     gameMode='classmate';mpSeat=0;
@@ -1221,7 +1241,7 @@ async function createClassmateRoom(){
       const code=roomCode(),lobby=mpDb.ref('lobbies/'+code),snap=await lobby.once('value');
       if(session!==onlineSessionVersion)return;if(snap.exists())continue;
       const ref=mpDb.ref('rooms/'+code);mpRoom=code;mpRef=ref;setModeBadge();
-      await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,game:{board:boardToWire(Array(9).fill(null)),hands:clone(dealHands()),turn:0,moves:0,finished:false}});
+      await ref.set({p1:mpUid,p1Online:true,created:firebase.database.ServerValue.TIMESTAMP,...(rules==='advanced'?{rules:'advanced'}:{}),game:gameForRules(rules)});
       if(session!==onlineSessionVersion)return;await lobby.set(mpUid);if(session!==onlineSessionVersion)return;
       ref.child('p1Online').onDisconnect().set(false);
       document.querySelector('#createdRoom').hidden=false;document.querySelector('#joinRoom').hidden=true;document.querySelector('#roomCode').textContent=code;listenRoom();return;
@@ -1246,11 +1266,56 @@ async function joinClassmateRoom(){
   }catch(e){if(session!==onlineSessionVersion)return;if(mpRef)mpRef.off();mpRef=null;mpRoom=null;mpSeat=null;gameMode='computer';mpError(e.message);setModeBadge();}
 }
 
-function listenRoom(){if(!mpRef)return;const ref=mpRef;ref.on('value',snap=>{if(ref!==mpRef)return;const room=snap.val();if(!room){mpError('That room no longer exists.');return}if(mpSeat===0&&!room.p2){document.querySelector('#roomWait').textContent='Waiting for your classmate…';return}if(room.game){const old=board?clone(board):Array(9).fill(null),s=stateFromWire(room.game);board=s.board;hands=s.hands;turn=s.turn;busy=false;selected=null;if(!board.some(Boolean)){cancelTriadAnimations();window.codaTriadReset();endSoundPlayed=false;}startScreen.classList.add('hidden');setModeBadge();if(!endSoundPlayed)startMusic();const changed=[];board.forEach((c,i)=>{if(c&&old[i]&&c.owner!==old[i].owner)changed.push(i)});const placed=board.findIndex((c,i)=>c&&!old[i]);const mpClashes=placed>=0?clashesForPlacement(placed,board[placed],old):[];if(mpClashes.length)queueRhythmClashes(mpClashes);if(changed.length)queueCaptureFX(changed);busy=clashesActive();render();const generation=triadGeneration;if(busy)waitForClashes(generation).then(active=>{if(active){busy=false;render();}})}})}
+function listenRoom(){
+ if(!mpRef)return;const ref=mpRef;
+ ref.on('value',snap=>{
+  if(ref!==mpRef)return;const room=snap.val();
+  if(!room){mpError('That room no longer exists.');return;}
+  const rules=room.rules==='advanced'||room.game?.rules==='advanced'?'advanced':'simple';adoptOnlineRules(rules);
+  if(mpSeat===0&&!room.p2){document.querySelector('#roomWait').textContent='Waiting for your classmate…';return;}
+  if(!room.game)return;
+  const s=stateFromWire(room.game,rules),key=JSON.stringify([s.rules,s.moves,s.round,s.finished,s.board,s.hands]);
+  if(mpRenderedRoom===ref&&mpSnapshotKey===key)return;
+  const first=mpRenderedRoom!==ref,oldMoves=mpMoves,oldRound=mpRound,old=board?.map(triadCardCopy)||[];
+  const fresh=first||s.moves===0&&oldMoves>0,redealt=!first&&s.rules==='advanced'&&s.round>oldRound;
+  cancelTriadAnimations();
+  board=s.board;hands=s.hands;turn=s.turn;mpMoves=s.moves;mpRound=s.round;mpFinished=s.finished;
+  mpRenderedRoom=ref;mpSnapshotKey=key;selected=null;busy=false;
+  if(fresh){window.codaTriadReset();endSoundPlayed=false;stopEndCue();}
+  if(redealt){endSoundPlayed=false;stopEndCue();}
+  window.musicTriadAdvancedOnline?.received(s,{fresh,redealt});
+  startScreen.classList.add('hidden');setModeBadge();if(!endSoundPlayed)startMusic();
+  const animate=!fresh&&!redealt&&s.moves===oldMoves+1&&s.round===oldRound;
+  if(!animate){render();return;}
+  const generation=triadGeneration,done=triadVisualTask(generation);busy=true;render();
+  (async()=>{
+   try{
+    if(rules==='advanced')await window.musicTriadAdvancedOnline.animate(s.lastMove,old,generation);
+    else{
+     const placed=board.findIndex((card,index)=>card&&!old[index]),changed=[];
+     board.forEach((card,index)=>{if(card&&old[index]&&card.owner!==old[index].owner)changed.push(index);});
+     if(placed>=0)queueRhythmClashes(clashesForPlacement(placed,board[placed],old));
+     if(changed.length)queueCaptureFX(changed);
+    }
+    await waitForClashes(generation);
+   }finally{done();if(generation===triadGeneration&&ref===mpRef){busy=false;render();}}
+  })();
+ });
+}
+async function advancedOnlinePlace(index){
+ if(!isMp()||onlineRules!=='advanced'||!mpRef||selected===null||busy||clashesActive()||turn!==mpSeat||mpFinished)return;
+ const ref=mpRef,seat=mpSeat,choice=selected,session=onlineSessionVersion;selected=null;busy=true;render();
+ try{
+  const result=await ref.child('game').transaction(raw=>window.musicTriadAdvancedOnline.move(raw,seat,choice,index),undefined,false);
+  if(session!==onlineSessionVersion||ref!==mpRef)return;
+  if(!result.committed){busy=false;render();document.querySelector('#status').textContent='That move is no longer available. Choose again.';}
+ }catch{if(session===onlineSessionVersion&&ref===mpRef){busy=false;render();document.querySelector('#status').textContent='Move failed — try again.';}}
+}
+window.MusicTriadOnlineQA=Object.freeze({state:()=>({rules:onlineRules,round:mpRound,moves:mpMoves,finished:mpFinished,seat:mpSeat,room:mpRoom,tournamentRules})});
 document.querySelector('#vsComputer').addEventListener('click',enterComputer);
-document.querySelector('#vsClassmate').addEventListener('click',()=>{if(window.musicTriadAdvancedSelected?.())return;unlockAudio();closeModePanels('mpPanel');document.querySelector('#mpPanel').hidden=false;mpError('')});
+document.querySelector('#vsClassmate').addEventListener('click',()=>{unlockAudio();closeModePanels('mpPanel');document.querySelector('#mpPanel').hidden=false;mpError('')});
 document.querySelector('#viewFinalBracket').addEventListener('click',()=>{hideChampionSplash();returnToTournamentLobby()});
-document.querySelector('#tournamentMode').addEventListener('click',()=>{if(window.musicTriadAdvancedSelected?.())return;unlockAudio();setTournamentControls();closeModePanels('tourneyPanel');document.querySelector('#tourneyPanel').hidden=false;tournamentError('')});
+document.querySelector('#tournamentMode').addEventListener('click',()=>{unlockAudio();setTournamentControls();closeModePanels('tourneyPanel');document.querySelector('#tourneyPanel').hidden=false;tournamentError('')});
 document.querySelector('#createTournament').addEventListener('click',createTournamentLobby);
 document.querySelector('#showTournamentJoin').addEventListener('click',()=>{document.querySelector('#createdTournament').hidden=true;document.querySelector('#studentTournamentStatus').hidden=true;document.querySelector('#joinTournament').hidden=false;tournamentError('')});
 document.querySelector('#joinTournamentNow').addEventListener('click',joinTournamentLobby);
@@ -1371,14 +1436,16 @@ function syncHomeModeToggle(){
  t.checked=!!advancedMode;
  document.getElementById('simpleModeLabel')?.classList.toggle('active',!advancedMode);
  document.getElementById('advancedModeLabel')?.classList.toggle('active',!!advancedMode);
- const unavailable=!!advancedMode;
+ t.disabled=!!(mpRef||tournamentRef);
+ t.title=t.disabled?'The host has set the rules for this game.':'';
+ const unavailable=window.CodaGamePrivacy?.testMode===true;
  for(const id of ['vsClassmate','tournamentMode']){
    const b=document.getElementById(id);
    if(!b)continue;
    b.disabled=unavailable;
    b.classList.toggle('mode-unavailable',unavailable);
    b.setAttribute('aria-disabled',String(unavailable));
-   b.title=unavailable?'Coming soon in Advanced Mode':'';
+   b.title=unavailable?'Test mode uses local play':'';
  }
 }
 function initHomeModeToggle(){
@@ -1386,6 +1453,7 @@ function initHomeModeToggle(){
  if(!t||t.dataset.ready)return;
  t.dataset.ready='1';
  t.addEventListener('change',()=>{
+   if(mpRef||tournamentRef){syncHomeModeToggle();return;}
    advancedMode=t.checked;
    document.body.classList.toggle('advanced-mode',advancedMode);
    syncHomeModeToggle();
@@ -1445,7 +1513,7 @@ let advancedFinished=false,advancedTieNotice='';
  }
  function drawForTurn(owner){hands[owner].push(advDraw(owner))}
  function specialLabel(t){return{mmrest:[`<span class="mmrest-symbol" aria-label="multi-measure rest"><i class="mmrest-bar"></i><i class="mmrest-left"></i><i class="mmrest-right"></i></span>`,'MULTI-MEASURE','RESTS ONLY'],qfermata:[`<span class="qf-symbol"><span class="qf-fermata"><i></i></span>${baseSvg('qn')}</span>`,'QUARTER-NOTE FERMATA','NOTES ONLY'],subito:['','SUBITO','SUDDENLY CLEAR 1 CARD'],tacet:['𝄻','TACET','CLEAR CROSS'],mordent:[`<span class="turn-symbol exact-turn" aria-label="turn ornament"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAADkCAYAAADuMpxHAAAOJUlEQVR4nO3d23LjSA4FQHpi//+Xex88npZtSuKlLiggM2KfRywCh2cp2/2xEdGfQf+dj0H/HWAdvfJH3gTjhswz6iF/ldmA/KLkkLyZwKGPEWXJ7jIvsLaVskjedOaA+1hpye4wP7CGDJkkbxpzoG1kWK4WzBPEkT2X5M1NDvC67MvVgvmC8Spmk6y5wKGdU3GxWjFr0Jd8+iRrDnJQ71mq9swdtCOj9smZNxzQc5aqP/MH98ipY2TNDofynWWaxyzCcbLqOlnzLwfxyTLFYSbhNXnVRvmsqX4AFim26vMJj+RVH2VzpuqFW6S1VJ1T+CKz+iuXM9Uu2BKtrdq8wrbJrdHK5EyZC90sUSaV5pba5NY86XMm/QVuFiizCvNLXbJrvtQZk/niLE8tmWeZWmRXPCnz5Z/ZH6ATC1TPn819B/pImS3ZWk3Km8Rp2eaaOmRYfGnyJcuFWBr2ZJlvapBj60iRLRkuwtLwToY5Jzc5tqals2XpD79ZGs5Zfd7JSY6tbdlcWfWDWxjuWHXuyUeW5bFcrqz4WwAWhrvMENDacrmyWmNZ7oAJb7UdIA95ltMymbLKB7Uo9LbKLpCDTMttiTxZ4SsAi8II5gxoZYk/TBa9pYQ/QFKKvhesTa7VEjZPwn6wzZIwX+T9YE1yraaQWRL1KwBLQgTmEGghZJZEbCUhD4ryIu4Ka5FthMqRaG8ALAhRmU3grlA5EqmNhDoYeCHS3rAG+cajEBkS5Q2A5WAl5hW4I0SGRGghIQ4CLoqwQ8Qm43hman7MfgNgMVidGQaumpofMwuA4CSLJf7qFxDStOyYVQCEJRmZa34yExwxZU5mFAALQWbmG7hieHaMLgDCkQp8JQBcMTQ3RhYAgUg1Zr42958rhs3NqAJgEajK7ANnDcmN2b8GCBUoAUA4I/4IgfCDv/zhoBrkHi10zYvebwAsAXxnJ4CjuuZFzwIg6GCf3QCO6pYXfgYA5vCrgsBUvQqAYINj7ArwTpec6FEABBqcY2eAd5rnROufMBRkcI/fElifHKSnZhnhZwAgFg8PYIiWBUBwQRt2CXimWT60KgACC9ryWwLAM02ywVcAEJsSAHTRogAIKOjLjgE/3c4FbwBgDUoA0NTdAiCUYBz7Bjy6lQl3CoAwgvHsHfDocib8r+WnoIuWfxjGwyOHr/vojwYBl10NEA+SfkaHunu5NiUgHjvFDKezwBuA+WYH+ON/X3Ct5882f4aABV0JDg+JNlYIbfd6HSvMUxX2hllO5YA3AGOtFtLeDqzDmwDglLOB4SFwTaZgNgOxZZq1VdkRZjqcAd4A9JUxjL0ViM1vCACHnAkJYX9ctfA1GzFVm8Mo7AOzHdp9fwq4vYqh+7HVvO7oPIjmsAss4eigCpL3LP1f5iUWszmeHWC2t3vvDUAbAvY7bwRi8TACfjlSAITHax50zykCcdhjqOXtzvstgOs82I77OisPobn8hgDwH18BXCNAr/FGIAZFrD9zTnjvCoCg+M1i36cIzGe3Ib+Xe+4NwDkeWm05z7mUAChMATjOw6oPbwPmUgKgqFfBKxj+8oAax9zNYcb7MM9EsLvf3gC8JxjHct5zeFBBMc8KgDD45GE0h68F5rD37ZljwvIG4DmLO597MJ4SAPns7rUCsM+DJw5vA8ZTAqCAvQJg+YlICRhLDrRjdong1057A/CbZY3L24CxlABITAH4zsNlDYrAOEpAG+aVcBQAViZUx1ACIKGfBaDyonuYrMl9G6NyNrRiVpnt2x57A/DJYq7NVwJjKAGQiAJAJkpAf0rAPWaUMBQAC5mN+9mfEkAG5bPisQBYarLwlUB/8uI6szlf5Xvw3+5WfwNQeQgqcH/7UgKuM5sxlL4P1QsA+ZVe8AH+bIoAa5EJ/6pcAAxBHb4S6E8JOM9Mjrd35mXvQ+UCQD1lF30QJeA8M8k0XwWg2uJaurrc+76qZUkLZnKMV+dc7R782TZvAKjJVwJ9KQHnmce+nO8OBYDKhEI/SgBR2PMnKhYAw8Aj89CPEnCOWWzvzJmWO/+KBQB+Krf4AykB55jFdpzlGwoAfPJzAf0oAeeYw/uc4QEfW63lNBQcUWknRrJ/55jDa+7OWZlz9wYAfvOg6qNMsDbirdR5zusEBQD2CZI+lIDzzOIxzukkBQCe8//A+lACzjOHrzmfCyoVAAPCVWanPSXgPHP4m5J+Q6UCAHcImfaUgPM88P7qdQ5lzlcBgOPKBMNASsA1lWdRCWpEAYBzBE97SsA1FR+E1a63KwUAzqsYvL0pAddVmMcK1zicAgDXCaS2lIB7Mj4kM15TGAoA3COc2lIC7svw0MxwDeEpAHCfoGpLCWhjtYfox7beZ15apX8LwFDRW5VdGsXOthdtRqPe42jn1EWVAhB1yMinwj6NZn/7mDWrq9zP9LusAEB7FXZqNDvcX6+5XfXepd9jBSA2C7muCns1mrllpPQ7rADE4pVcLhV2azSzyijp97dKAdi2uMER7fyjntOqot3fDMwoI6TfXQVgjlXOPNKZrW6Ve74Ks0lPJfbV3wEY58/D/1ax2ueNzAOrLXMJNykA/WV4iGa4hgiUgLbMJNygAPST8aGZ8ZpGUwLaMo9wkQLQXoWHZIVr7EkJaMs8wgUKQFvVQkjwXqcEtGcW4QQFoI3qD8LK136HEtCeWYSDKhWAXsEgcD5VL0FXKQHtmUM4oFIBaM0Db58zOU8JaM8cwhsKwDXC5TXnc54S0J455Ioyc6MAnFdmOG5yTucpAe15UwdPKADnCJJzhO95SkAf5hB++GerFTh3QkCAXOfszqm0kyOZQ/jrwxuAYwTHfc7wHCWgD3PIK6XmQwF4r9RAdOYsz1EC+jCHsNUsAGeWX1C050zPUQL68PMplFexABwlHIhCCejHnvOl3CwoAPvKDcJgzvc8JaAf80hJXwWgWri8WnhhMIZzPq/ano5kHinHGwBmErrnKQH9+LmAuqrd949tq10A9m54tSGIwJmfpwT0ZSYpoXIB+MnSs5KPTRHoSR7UUfZeVy8AZW98MO7DdUpAP74SILXHAlA5SCz5fO7BdZV3dwSzmVfpe1v9DcC2FR8A0lAC+pITZPFfVigARCJk71EC+vKVQC7l76UCALkoAf2Vf3CQw88CIDyYTbjeZ4/78zZgbe7d5g0AZKUEjOFBwkq+5YICQERCtQ0lYAzzuhb3618KAOSmBIzhK4E1uEcP9gqAwCACi9qOnR7H3LIMbwCgBiVgHG8DYqp+T35lwLMCICwgH3s9VvUHTiTuxQ5vAIjM0ranBIzlbcB8zv/J3isAUI8SMJ4iMIczf+FVARASRGCB+7Dfc5jncZz1G94AQF1KwBzeBvTnfP96uucKANSmBMyjCPThTA96VwCEA+Rnz+fywGrHWZ7gDQArsNT9KQFzeRtwn/P77eVeKwDAl49NEZhNEbjGmV1wpAAIBKjFzs+nCBzjnG7wBgDYowTE4AH3nHN57e0OHy0AwgDqsfdxKALfOYsGziy4A2c2D6Q57H48VXfBLB5zaD7ODpHDZ6aqoReB3Y+rwl6Yv3MUANKpEHTRyYC4Mu6HeTvv8Byc/SHAjAMGHCcD4sr0cwKZriWsK8vspjCLh08ccmANq+2Mubrn1P2+OhxuEjOsFmbZyYG1RN0fc9SOAkBaUQOsMlmwrln7ZGb6OH0/7wyAm8hoCkBMsiCP1jtmNsZRAEhNAYhLHsA8l7Lxzp8CFsbAF/+QECzm7r8FYOGBRzIBxrq8c/4xIKA1JQDGuLVrLQqAZQd+kgsQnDcAQC9KAPRze79aFQCLDuyRDRBUyzcAFh3Y4zcEoK0m++QrAGAUJQDua7ZHrQuABacXs5WD+whB9HgDYMGBV3wlANc03ZteXwFYbuAdOQHHNd8XPwMAzKQEwCQ9C4DFBo7wlQC81mU/er8BsNTAUfICfuu2FyO+ArDU3GWG6nCv4a+u++BnAIBofCUAA4wqAJYZOEtuUFn3+R/5BsAyc4W5qc39p6Ihcz/6KwDLDJzlKwEqGTbrM34GwCIDV8gOshs647N+CNAic4Q54SczQVbDZ3vmbwFYZOAKXwmQzZR5nv1rgJYYuEp+kMG0OZ5dALbNErPPXHCEOYGLIhSAbbPEwHW+EmBVU+c22tL8mf0BCCHaXLIOGcIKQmRclDcAX0IcCrAsbwOILsx8RisA2xbocJjC/acFc0REoeYyYgHYtmCHBCzJ2wAiCTeL4T7QD77PqyX6PLI2ecIsIbMt6huALyEPjS7ca3ozY8wQdu7CfrAd2ntuK80i65MnjBA616K/AXgU+iC5xb1lNDNHb+FnLPwH3KG557LiDJKLTKGlZTJtpTcAX5Y5XGAJfluAVpaao6U+7A7NfW2rzx85yRWuWC7PlvvAOyzrmjLMHnnJFY5aNsuW/eA7LOw6Ms0duckVXlk6y5b+8Dssa3zZZo4aZAuPUuRYiovYYVljyjpv1CFbSJNjaS5kh0WNJ/O8UYt8qSddfqW7oB0Wdb4Kc0ZN8iW/tPmV9sJ+sKTzVJkxapMxOaXOr9QXt8OSjlVtvkDG5FAiu0pc5A5L2l/V2YJtkzGrKpVbpS52hyXto/pcwSM5E1/JzCp50TssaBvmCZ6TM/GUzqzSF7/Dgl5nluA4WTOXvNocwisW9BgzBNfJmbHk1QOHcYwl3Wd+oB0504ecesLBnGNBP5kb6EvW3COjDnBI11VcUPMC41XMmivk00kOrI3sC2pOIIbsWXOWbLrB4fWRYUnNBsSXIWvOkEsNOcwxVlpSMwFrWylv3pFHHTnceaIsqRmA/KLkzSuyaDAHHlOvZXW/gZ9GlgMZFMj/AUje7aFbz/emAAAAAElFTkSuQmCC" alt="turn ornament"></span>`,'TURN','FLIP ROW + COLUMN'],conductor:[`<span class="conductor-symbol" aria-label="conductor"><svg viewBox="0 0 90 90"><circle cx="44" cy="18" r="9" fill="currentColor"/><path d="M44 29 L44 58 M44 36 L24 49 M44 36 L64 24 M44 58 L31 79 M44 58 L59 78" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M63 24 L79 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>`,'CONDUCTOR','CAPTURE ALL']}[t]||['?','SPECIAL','']}
- cardEl=function(c){if(!advancedMode)return baseCardEl(c);if(c&&c.special){let d=document.createElement('div'),mine=c.owner===0,l=specialLabel(c.special);d.className='card '+(mine?'you':'cpu')+' '+((['subito','tacet'].includes(c.special))?'action-card':'advanced-special');if(c.special==='tacet'){d.innerHTML=`<div class="action-center"><span class="tacet-rest" aria-label="multi-measure rest"><i class="mmr-bar"></i><i class="mmr-left"></i><i class="mmr-right"></i></span><b>TACET</b></div>`}else{d.innerHTML=`<div class="action-center"><span class="big">${l[0]}</span>${l[1]}<span class="small">${l[2]}</span></div>`}return d}let d=baseCardEl(c);if(c&&c.meter){let m=document.createElement('span');m.className='time-signature';const p=c.meter.split('/');m.innerHTML=`<span>${p[0]}</span><span>${p[1]}</span>`;d.appendChild(m)}if(c&&c.art){const edges=d.querySelectorAll('.edge');c.art.forEach((a,i)=>{if(!a||!edges[i])return;let m=document.createElement('span');m.className='articulation-mark '+a;m.title=a;m.setAttribute('aria-label',a);edges[i].appendChild(m)})}return d};
+ cardEl=function(c){if(!advancedMode)return baseCardEl(c);if(c&&c.special){let d=document.createElement('div'),mine=c.owner===(isMp()?mpSeat:0),l=specialLabel(c.special);d.className='card '+(mine?'you':'cpu')+' '+((['subito','tacet'].includes(c.special))?'action-card':'advanced-special');if(c.special==='tacet'){d.innerHTML=`<div class="action-center"><span class="tacet-rest" aria-label="multi-measure rest"><i class="mmr-bar"></i><i class="mmr-left"></i><i class="mmr-right"></i></span><b>TACET</b></div>`}else{d.innerHTML=`<div class="action-center"><span class="big">${l[0]}</span>${l[1]}<span class="small">${l[2]}</span></div>`}return d}let d=baseCardEl(c);if(c&&c.meter){let m=document.createElement('span');m.className='time-signature';const p=c.meter.split('/');m.innerHTML=`<span>${p[0]}</span><span>${p[1]}</span>`;d.appendChild(m)}if(c&&c.art){const edges=d.querySelectorAll('.edge');c.art.forEach((a,i)=>{if(!a||!edges[i])return;let m=document.createElement('span');m.className='articulation-mark '+a;m.title=a;m.setAttribute('aria-label',a);edges[i].appendChild(m)})}return d};
  function advEnd(){return advancedFinished||board.every(Boolean)||((hands[0]||[]).length===0&&(hands[1]||[]).length===0)}
  function counts(){return board.reduce((a,c)=>{if(c)a[c.owner]++;return a},[0,0])}
  function redealAdvancedTie(ct){
@@ -1458,31 +1526,32 @@ let advancedFinished=false,advancedTieNotice='';
  }
  render=function(){
    if(!advancedMode)return baseRender();
-   const myTurn=turn===0,b=document.querySelector('#board');b.innerHTML='';
+   const mySeat=isMp()?mpSeat:0,myTurn=turn===mySeat,b=document.querySelector('#board');b.innerHTML='';
    board.forEach((c,i)=>{
      const x=document.createElement('button');x.className='slot '+(c?'':'empty');
-     const chosen=selected===null?null:hands[0][selected];
-     x.disabled=busy||!myTurn||(selected===null?!!c:(chosen&&['subito','tacet'].includes(chosen.special)?!c:!!c));
+     const chosen=selected===null?null:hands[mySeat][selected];
+     x.disabled=busy||!myTurn||(isMp()&&mpFinished)||(selected===null?!!c:(chosen&&['subito','tacet'].includes(chosen.special)?!c:!!c));
      x.onclick=()=>advancedHumanPlace(i);if(c)x.appendChild(cardEl(c));b.appendChild(x);
    });
    const h=document.querySelector('#hand');h.innerHTML='';
-   (hands[0]||[]).forEach((c,i)=>{
-     const x=document.createElement('button');x.className='pick '+(selected===i?'sel':'');x.disabled=busy||!myTurn;
+   (hands[mySeat]||[]).forEach((c,i)=>{
+     const x=document.createElement('button');x.className='pick '+(selected===i?'sel':'');x.disabled=busy||!myTurn||(isMp()&&mpFinished);
      x.onclick=()=>{advancedTieNotice='';selected=i;render();};x.appendChild(cardEl(c));h.appendChild(x);
    });
-   const ct=counts();document.querySelector('#modeBadge').textContent='🎼 ADVANCED MODE • VS COMPUTER';
-   document.querySelector('#score').textContent=`You ${ct[0]}  —  ${ct[1]} Computer`;
-   const over=advEnd(),settled=triadSettled();
-   if(!advTutorialHarness)window.codaTriadObserve(board,0,over&&settled,true);
+   const ct=counts(),opponent=1-mySeat;document.querySelector('#modeBadge').textContent=isMp()?`🎼 ADVANCED MODE • VS CLASSMATE • ROOM ${mpRoom}`+(mpRound>1?` • TIEBREAK ROUND ${mpRound}`:''):'🎼 ADVANCED MODE • VS COMPUTER';
+   document.querySelector('#score').textContent=`You ${ct[mySeat]}  —  ${ct[opponent]} ${isMp()?'Classmate':'Computer'}`;
+   const over=isMp()?mpFinished&&(board.every(Boolean)||(hands[0].length===0&&hands[1].length===0)):advEnd(),settled=triadSettled();
+   if(!advTutorialHarness)window.codaTriadObserve(board,mySeat,over&&settled,!isMp());
    if(over&&!settled){document.querySelector('#status').textContent='Finishing the last clash…';}
-   else if(over&&ct[0]===ct[1]&&!advTutorialHarness){redealAdvancedTie(ct);return;}
+   else if(over&&ct[0]===ct[1]&&!advTutorialHarness&&!isMp()){redealAdvancedTie(ct);return;}
    else if(over){
      advancedFinished=true;busy=true;
-     if(!advTutorialHarness&&!endSoundPlayed){endSoundPlayed=true;stopMusic();if(ct[0]>ct[1])fanfare('win');else if(ct[1]>ct[0])fanfare('lose');}
-     document.querySelector('#status').textContent=ct[0]>ct[1]?'You win!':ct[1]>ct[0]?'Computer wins.':'Tie game!';
+     if(!advTutorialHarness&&!endSoundPlayed){endSoundPlayed=true;stopMusic();if(ct[mySeat]>ct[opponent])fanfare('win');else if(ct[opponent]>ct[mySeat])fanfare('lose');}
+     document.querySelector('#status').textContent=ct[mySeat]>ct[opponent]?'You win!':ct[opponent]>ct[mySeat]?(isMp()?'Classmate wins.':'Computer wins.'):'Tie game!';
+     if(isMp()&&tournamentGameContext)reportTournamentResult(ct);
    }else{
-     const c=selected===null?null:hands[0][selected];
-     document.querySelector('#status').textContent=advancedTieNotice||
+     const c=selected===null?null:hands[mySeat][selected];
+     document.querySelector('#status').textContent=isMp()?(mpFinished?'This match has ended.':busy?'Watch the card comparison…':turn!==mySeat?"CLASSMATE’S TURN…":advancedTieNotice||(selected===null?'YOUR TURN — choose a card.':['subito','tacet'].includes(c?.special)?'YOUR TURN — choose an occupied square.':'YOUR TURN — choose an empty square.')):advancedTieNotice||
        (busy?'Computer is thinking…':turn===0?(selected===null?'Choose a card.':c?.special==='subito'?'SUBITO — choose an occupied square.':c?.special==='tacet'?'TACET — choose a card to clear it and its adjacent cards.':c?.special==='mordent'?'TURN — choose an empty square.':'Choose an empty square.'):'Computer turn…');
    }
    let key=document.querySelector('#advancedKey');
@@ -1532,6 +1601,46 @@ function useAction(owner,idx,c,target){if(c.special==='subito'){if(!board[target
  if(!clear.length)return false;
  clear.forEach(j=>board[j]=null)
 }else return false;hands[owner].splice(idx,1);return true}
+ // Online games use this same Advanced rule engine against transaction-local
+ // state. Only the committed snapshot is painted, for either player's seat.
+ window.musicTriadAdvancedOnline=Object.freeze({
+  setRules(rules){const next=rules==='advanced';if(next!==advancedMode)advancedFinished=false;advancedMode=next;document.body.classList.toggle('advanced-mode',advancedMode);syncHomeModeToggle();},
+  sync:syncHomeModeToggle,
+  createGame(){return {rules:'advanced',board:boardToWire(Array(16).fill(null)),hands:clone(advDeal()),turn:0,moves:0,round:1,finished:false};},
+  received(state,{fresh,redealt}){advancedFinished=state.finished;advancedTieNotice=redealt?`Tie! Fresh board and cards — round ${state.round}.`:fresh?'':advancedTieNotice;},
+  move(raw,seat,choice,index){
+   if(!raw||raw.rules!=='advanced'||![0,1].includes(seat)||!Number.isInteger(choice)||choice<0||!Number.isInteger(index)||index<0||index>=16)return;
+   const s=stateFromWire(raw,'advanced');
+   if(s.finished||s.turn!==seat||!Array.isArray(s.hands[seat])||!s.hands[seat][choice])return;
+   const c=triadCardCopy(s.hands[seat][choice]);c.owner=seat;
+   const action=c.special==='subito'||c.special==='tacet';
+   if(action?!s.board[index]:!!s.board[index])return;
+   s.hands[seat].splice(choice,1);
+   if(c.special==='subito')s.board[index]=null;
+   else if(c.special==='tacet')tacetTargets(index,s.board).forEach(position=>s.board[position]=null);
+   else applyAdvanced(index,c,s.board);
+   const moves=s.moves+1,round=s.round,kind=action?c.special:'place';
+   const terminal=s.board.every(Boolean)||(s.hands[0].length===0&&s.hands[1].length===0);
+   if(terminal){
+    const totals=s.board.reduce((sum,card)=>{if(card)sum[card.owner]++;return sum;},[0,0]);
+    if(totals[0]===totals[1])return {rules:'advanced',board:boardToWire(Array(16).fill(null)),hands:clone(advDeal()),turn:round%2,moves,round:round+1,finished:false};
+   }
+   s.turn=1-seat;
+   if(!terminal){
+    // Both seats draw the same repeating strength mix, with independent cards.
+    const mix=['low','low','mid','mid','high','mid'],band=mix[Math.floor(s.moves/2)%mix.length];
+    s.hands[s.turn].push(Math.random()<.18?special(s.turn,rand(['mmrest','qfermata','subito','tacet','mordent','conductor'])):advRegularInBand(s.turn,band));
+   }
+   return {rules:'advanced',board:boardToWire(s.board),hands:clone(s.hands),turn:s.turn,moves,round,finished:terminal,lastMove:{seat,index,card:clone(c),kind,sequence:moves}};
+  },
+  async animate(move,before,generation){
+   if(!move||!Number.isInteger(move.index)||!move.card)return;
+   if(move.kind==='tacet')await animateTacetFX(move.index,tacetTargets(move.index,before),generation);
+   else if(move.kind==='subito')await advOverlay('SUBITO!','SUDDENLY CLEAR ONE CARD','',TRIAD_CLASH_TIMING.special,generation);
+   else if(move.card.special==='mordent')await animateTurnFX(move.index,generation);
+   else await animateAdvancedClashes(move.index,move.card,before,generation);
+  }
+ });
  
 function advSleep(ms,generation=triadGeneration){return triadPause(ms,generation);}
 function advSlots(){return Array.from(document.querySelectorAll('#board .slot'));}
@@ -1601,7 +1710,7 @@ async function advanceAfterHuman(generation=triadGeneration){
  turn=1;busy=true;drawForTurn(1);render();if(!await advSleep(500,generation))return;await cpuMove();
 }
 const advancedHumanPlace=async function(i){
- if(!advancedMode)return baseHumanPlace(i);if(selected===null||busy||turn!==0)return;const card=hands[0][selected];if(!card)return;
+ if(!advancedMode)return baseHumanPlace(i);if(isMp())return advancedOnlinePlace(i);if(selected===null||busy||turn!==0)return;const card=hands[0][selected];if(!card)return;
  if(['subito','tacet'].includes(card.special)?!board[i]:!!board[i])return;
  const generation=triadGeneration,done=triadVisualTask(generation),before=board.map(triadCardCopy);busy=true;window.codaTriadDifficultyUsed?.(document.querySelector('#level').value);
  try{
